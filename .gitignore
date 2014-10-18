@@ -17,6 +17,7 @@ $RECYCLE.BIN/
 *.sln
 *.sdf
 *.pyc
+*.suo
 Debug/
 Release/
 Simple Client/.idea/

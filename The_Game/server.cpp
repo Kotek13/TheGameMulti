@@ -4,11 +4,6 @@
 #include <Windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <cstdio>
-#include <iostream>
-#include <cstdlib>
-#include <process.h>
-#include <vector>
 #include "bullet.h"
 #include "server.h"
 

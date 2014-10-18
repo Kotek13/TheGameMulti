@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "bullet.h"
-#include "menu.h"
 #include "server.h"
 #include <Windows.h>
 
@@ -44,7 +43,7 @@ void check_collisions()
 				players[j].v_y = v_y_1;
 
 				players[i].step();
-				players[i].step();
+				players[j].step();
 			}
 		}
 	}
