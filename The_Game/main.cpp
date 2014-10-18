@@ -86,7 +86,7 @@ void draw_footer()
 			al_draw_filled_rectangle(MAP_SIZE / players.size() * i, MAP_SIZE + 2, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() * players[i].hp / HP, MAP_SIZE + FOOTER_SIZE, players[i].color);
 		}
 		char * buffer = new char[100];
-		sprintf_s(buffer, 100, "[%c] P%d [%d]", (players[i].connected) ? '+' : '-', i, players[i].points);
+		sprintf_s(buffer, 100, "[%c] %s [%d]", (players[i].connected) ? '+' : '-', logins[i], players[i].points);
 		al_draw_line(MAP_SIZE / players.size() * i, MAP_SIZE + 1, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() * players[i].ammo / MAX_AMMO, MAP_SIZE + 1, al_map_rgb(255, 255, 255), 2);
 		al_draw_text(foot_font, COLOR_WHITE, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() / 2, MAP_SIZE + 1, ALLEGRO_ALIGN_CENTER, buffer);
 
