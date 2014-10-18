@@ -1,0 +1,66 @@
+__author__ = 'Kalmar'
+__version__ = '0.1'
+
+from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_UDP, timeout
+from struct import pack, unpack
+
+
+class Conversation(object):
+    sock = None
+    id = None
+    nr = None
+    fps = None
+    command_set = {"MOVE_RIGHT": 0, "MOVE_LEFT": 1, "MOVE_UP": 2, "MOVE_DOWN": 3, "ROT_RIGHT": 4, "ROT_LEFT": 5, "SHOOT": 6}
+    flags = {"ALIVE": 0, "SHOT": 1}
+
+    def __init__(self, settings):
+        self.id = pack("I", settings['ID'])
+        self.nr = settings['NR']
+        self.fps = settings['FPS']
+        self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+        self.sock.connect((settings['IP'], settings['PORT']))
+        self.sock.settimeout(1.0 / self.fps * 2)
+
+    def parse_server(self, buf):
+        n = ord(buf[0])
+        players = []
+        for i in xrange(n):
+            tmp = buf[(1+12*i):(1+12*(i+1))]
+            dic = dict()
+            dic['x'] = unpack("H", tmp[:2])[0]
+            dic['y'] = unpack("H", tmp[2:4])[0]
+            dic['angle'] = unpack("f", tmp[4:8])[0]
+            dic['hp'] = unpack("H", tmp[8:10])[0]
+            flags = unpack("H", tmp[10:12])[0]
+            dic['alive'] = (((flags >> self.flags["ALIVE"]) & 1) == 1)
+            dic['shot'] = (((flags >> self.flags["SHOT"]) & 1) == 1)
+            players.append(dic)
+        return players
+
+    def parse_client(self, commands):
+        buf = self.id
+        com = 0
+        if type(commands) != tuple:
+            print "parse_client: wrong input format!"
+            return buf+chr(com & 0xff)
+
+        for i in commands:
+            try:
+                com |= (1 << self.command_set[i])
+            except KeyError:
+                print "parse_client: wrong command!"
+        return buf+chr(com & 0xff)
+
+    def get_state(self):
+        try:
+            buf = self.sock.recv(4096)
+            return self.parse_server(buf)
+        except timeout:
+            print "get_state: connection timed out."
+        return None
+
+    def send_commands(self, commands=()):
+        self.sock.sendall(self.parse_client(commands))
+
+    def hello(self):
+        self.send_commands()

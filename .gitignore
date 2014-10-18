@@ -8,6 +8,22 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
+#Compilation files
+*.obj
+*.exe
+*.pdb
+*.user
+*.vcxproj*
+*.sln
+*.sdf
+*.pyc
+Debug/
+Release/
+Simple Client/.idea/
+pre_client.py
+The_Game/Debug/
+The_Game/Release/
+
 # Windows Installer files
 *.cab
 *.msi
@@ -26,8 +42,7 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 # Thumbnails
 ._*
 
