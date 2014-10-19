@@ -1,9 +1,8 @@
 __author__ = 'Kalmar'
-
-
+from Player import Player
 from Simple import Simple
 
-settings = {"IP": "192.168.1.4",
+settings = {"IP": "192.168.1.10",
             "PORT": 8081,
             "ID": 0x00dd9e31,
             "NR": 0,
@@ -13,8 +12,11 @@ settings = {"IP": "192.168.1.4",
             "BULLET_SPEED": 3}
 
 
-def main():
+def play():
+    x = Player(settings)
+    x.run()
+
+
+def run_bot():
     bot = Simple(settings)
     bot.killemall_static()
-
-main()

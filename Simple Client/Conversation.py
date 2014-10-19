@@ -10,8 +10,8 @@ class Conversation(object):
     id = None
     nr = None
     fps = None
-    command_set = {"MOVE_RIGHT": 0, "MOVE_LEFT": 1, "MOVE_UP": 2, "MOVE_DOWN": 3, "ROT_RIGHT": 4, "ROT_LEFT": 5, "SHOOT": 6}
-    flags = {"ALIVE": 0, "SHOT": 1}
+    command_set = dict(MOVE_RIGHT=0, MOVE_LEFT=1, MOVE_UP=2, MOVE_DOWN=3, ROT_RIGHT=4, ROT_LEFT=5, SHOOT=6)
+    flags = dict(ALIVE=0, SHOT=1)
 
     def __init__(self, settings):
         self.id = pack("I", settings['ID'])
@@ -20,6 +20,7 @@ class Conversation(object):
         self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         self.sock.connect((settings['IP'], settings['PORT']))
         self.sock.settimeout(1.0 / self.fps * 2)
+        print self.command_set["MOVE_RIGHT"]
 
     def parse_server(self, buf):
         n = ord(buf[0])
