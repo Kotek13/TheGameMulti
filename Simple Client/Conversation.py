@@ -20,7 +20,6 @@ class Conversation(object):
         self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         self.sock.connect((settings['IP'], settings['PORT']))
         self.sock.settimeout(1.0 / self.fps * 2)
-        print self.command_set["MOVE_RIGHT"]
 
     def parse_server(self, buf):
         n = ord(buf[0])
@@ -41,9 +40,6 @@ class Conversation(object):
     def parse_client(self, commands):
         buf = self.id
         com = 0
-        if type(commands) != tuple:
-            print "parse_client: wrong input format!"
-            return buf+chr(com & 0xff)
 
         for i in commands:
             try:
@@ -52,13 +48,13 @@ class Conversation(object):
                 print "parse_client: wrong command!"
         return buf+chr(com & 0xff)
 
-    def get_state(self):
+    def get_board(self):
         try:
             buf = self.sock.recv(4096)
             return self.parse_server(buf)
         except timeout:
             print "get_state: connection timed out."
-        return None
+            return None
 
     def send_commands(self, commands=()):
         self.sock.sendall(self.parse_client(commands))

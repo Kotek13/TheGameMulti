@@ -16,7 +16,7 @@ class Simple(object):
 
     def target_player(self, server, nr):
         while True:
-            self.glob_board = server.get_state()
+            self.glob_board = server.get_board()
             m_angle = self.glob_board[server.nr]["angle"]
             m_x, m_y = self.glob_board[server.nr]['x'], -self.glob_board[server.nr]['y']
             t_x, t_y = self.glob_board[nr]['x'], -self.glob_board[nr]['y']
@@ -36,12 +36,12 @@ class Simple(object):
     def kill_player(self, nr):
         while True:
             self.target_player(self.server, nr)
-            if not self.glob_board[nr]["alive"]:
+            if not self.glob_board[nr]['alive']:
                 break
             self.server.send_commands(("SHOOT",))
 
     def killemall_static(self):
-        self.glob_board = self.server.get_state()
+        self.glob_board = self.server.get_board()
         if self.debug:
             print self.glob_board
         x = len(self.glob_board)

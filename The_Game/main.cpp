@@ -200,11 +200,10 @@ int game(void) {
 		{
 			al_get_keyboard_state(&klawiatura);
 			al_clear_to_color(al_map_rgb(0, 0, 0));
-			if (counter % BULLET_TIME == 0)
-			{
-				for (auto i = players.begin(); i < players.end(); i++)
-					i->move();
-			}
+			
+			for (auto i = players.begin(); i < players.end(); i++)
+				i->move();
+			
 			for (auto j = bullets.begin(); j != bullets.end(); j++)
 			{
 				j->move();
@@ -215,9 +214,7 @@ int game(void) {
 			for (auto i = players.begin(); i < players.end(); i++)
 				i->shoot(bullets, shoot);
 
-			if (counter % BULLET_TIME == 0)
-				check_collisions();
-
+			check_collisions();
 			check_hits();
 
 			for (auto i = players.begin(); i != players.end(); i++)
@@ -225,11 +222,7 @@ int game(void) {
 			for (auto i = bullets.begin(); i != bullets.end(); i++)
 				i->draw();
 
-			if (counter % BULLET_TIME == 0)
-				send_state(buf);
-
-			counter++;
-			counter %= BULLET_TIME;
+			send_state(buf);
 		}
 		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			return -1;
@@ -274,7 +267,7 @@ int main(void)
 	al_start_timer(timer);
 	al_register_event_source(queue, al_get_display_event_source(okno));
 	al_register_event_source(queue, al_get_timer_event_source(timer));
-	al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+	//al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)run_server, NULL, 0, NULL);
 	game();
 

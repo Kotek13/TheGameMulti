@@ -56,21 +56,20 @@ player::player()
 void player::change_state()
 {
 	if (this->state->get(SHOOT))
-	{
-		this->shots_left = BULLET_TIME;
-	}
+		this->shots_left = 1;
+
 	if (ammo) {
-		if (++this->counter > 3)
+		if (++this->counter > 1)
 		{
 			this->counter = 0;
-			this->ammo += (ammo >= MAX_AMMO) ? 0 : 1 * BULLET_TIME;
+			this->ammo += (ammo >= MAX_AMMO) ? 0 : 1;
 		}
 	}	
 	else {
 		this->shots_left = 0;
 		if (++this->counter > 50){
 			this->counter = 0;
-			this->ammo += 1 * BULLET_TIME;
+			this->ammo += 1;
 		}
 	}
 	float v1 = this->v_x * this->v_x + this->v_y * this->v_y;
@@ -172,12 +171,12 @@ bool player::collision(player &P)
 
 void player::shoot(list < bullet > &bullets, ALLEGRO_SAMPLE * shoot)
 {
-	if ((this->shots_left > 0) && this->ammo > 0)
+	if (this->shots_left > 0 && this->ammo > 0)
 	{
 			bullets.push_back(bullet(this));
 			this->ammo--;
 			this->shots_left--;
 			this->shot = true;
-			al_play_sample(shoot, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+			//al_play_sample(shoot, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
 	}
 }
