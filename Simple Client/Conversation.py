@@ -7,15 +7,15 @@ from struct import pack, unpack
 
 class Conversation(object):
     sock = None
-    id = None
-    nr = None
+    pin = None
+    player_number = None
     fps = None
     command_set = dict(MOVE_RIGHT=0, MOVE_LEFT=1, MOVE_UP=2, MOVE_DOWN=3, ROT_RIGHT=4, ROT_LEFT=5, SHOOT=6)
     flags = dict(ALIVE=0, SHOT=1)
 
     def __init__(self, settings):
-        self.id = pack("I", settings['ID'])
-        self.nr = settings['NR']
+        self.pin = pack("I", settings['ID'])
+        self.player_number = settings['NR']
         self.fps = settings['FPS']
         self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         self.sock.connect((settings['IP'], settings['PORT']))
@@ -38,9 +38,8 @@ class Conversation(object):
         return players
 
     def parse_client(self, commands):
-        buf = self.id
+        buf = self.pin
         com = 0
-
         for i in commands:
             try:
                 com |= (1 << self.command_set[i])
@@ -53,7 +52,7 @@ class Conversation(object):
             buf = self.sock.recv(4096)
             return self.parse_server(buf)
         except timeout:
-            print "get_state: connection timed out."
+            print "get_board: connection timed out."
             return None
 
     def send_commands(self, commands=()):

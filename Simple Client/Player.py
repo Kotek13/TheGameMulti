@@ -23,7 +23,7 @@ class Player(object):
         for i in xrange(len(self.board)):
             if not self.board[i]['alive']:
                 continue
-            if i == self.server.nr:
+            if i == self.server.player_number:
                 cl = pygame.Color(255, 0, 0)
             else:
                 cl = pygame.Color(255, 255, 255)
@@ -49,8 +49,9 @@ class Player(object):
         while True:
             pygame.event.pump()
             self.board = self.server.get_board()
-            self.draw()
-            self.send_keyboard()
+            if self.board:
+                self.draw()
+                self.send_keyboard()
 
 
 

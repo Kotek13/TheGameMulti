@@ -17,8 +17,8 @@ class Simple(object):
     def target_player(self, server, nr):
         while True:
             self.glob_board = server.get_board()
-            m_angle = self.glob_board[server.nr]["angle"]
-            m_x, m_y = self.glob_board[server.nr]['x'], -self.glob_board[server.nr]['y']
+            m_angle = self.glob_board[server.player_number]["angle"]
+            m_x, m_y = self.glob_board[server.player_number]['x'], -self.glob_board[server.player_number]['y']
             t_x, t_y = self.glob_board[nr]['x'], -self.glob_board[nr]['y']
             v = (t_x - m_x, t_y - m_y)
             tmp = atan2(v[1], v[0])
@@ -46,7 +46,7 @@ class Simple(object):
             print self.glob_board
         x = len(self.glob_board)
         for i in xrange(x):
-            if i != self.server.nr and self.glob_board[i]["alive"]:
+            if i != self.server.player_number and self.glob_board[i]["alive"]:
                 self.kill_player(i)
                 sleep(4)
         return

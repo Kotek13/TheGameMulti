@@ -1,12 +1,11 @@
 __author__ = 'Kalmar'
 from Player import Player
 from Simple import Simple
-from time import sleep
 
-settings = {"IP": "192.168.1.10",
+settings = {"IP": "127.0.0.1",
             "PORT": 8081,
-            "ID": 0xbc5c2cdc,
-            "NR": 1,
+            "ID": 0x00dd9e31,
+            "NR": 0,
             "FPS": 60,
             "MAP_SIZE": 600.0,
             "BLOCK_SIZE": 15.0,
