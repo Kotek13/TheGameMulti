@@ -6,7 +6,7 @@ import settings
 
 class Simple(object):
     server = None
-    players = [Player]
+    players = []
 
     def __init__(self):
         self.server = Conversation()

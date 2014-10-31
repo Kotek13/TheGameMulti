@@ -182,6 +182,7 @@ void send_state(char * buf)
 		msg->flags = 0;
 		msg->flags |= (short)players[i].alive;
 		msg->flags |= ((short)players[i].shot << 1);
+		msg->flags |= ((short)(players[i].ammo == MAX_AMMO) << 2);
 		memcpy(p, msg, sizeof server_msg);
 		p += sizeof(server_msg);
 	}

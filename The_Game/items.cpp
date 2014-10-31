@@ -37,8 +37,6 @@ bool states::get(choice c)
 	size_t val = static_cast<size_t>(c);
 	return ((choices >> c) & 1) == 1;
 };
-
-
 player::player()
 {
 	this->login_hash = 0;
@@ -52,7 +50,6 @@ player::player()
 	this->points = 0;
 	this->y = 0;
 }
-
 void player::change_state()
 {
 	if (this->state->get(SHOOT))
@@ -105,7 +102,6 @@ void player::change_state()
 	}
 	this->state->choices = 0;
 }
-
 void player::step()
 {
 	if (this->x + this->v_x > MAP_SIZE - BLOCK_SIZE)
@@ -120,7 +116,6 @@ void player::step()
 	this->x = this->x + this->v_x;
 	this->y = this->y + this->v_y;
 }
-
 void player::move()
 {
 	if (this->alive)
@@ -130,12 +125,10 @@ void player::move()
 		this->step();
 	}		
 }
-
 bool player::is_in(float X, float Y)
 {
 	return (X >= this->x) && (X <= (this->x + BLOCK_SIZE)) && (Y >= this->y) && (Y <= (this->y + BLOCK_SIZE));
 }
-
 void player::spawn()
 {
 	this->alive = true;
@@ -149,7 +142,6 @@ void player::spawn()
 	this->gun_alpha = 0;
 	this->shot = false;
 }
-
 void player::draw()
 {
 	if (this->alive)
@@ -163,12 +155,10 @@ void player::draw()
 			spawn();
 	}
 }
-
 bool player::collision(player &P)
 {
 	return this->is_in(P.x, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y + BLOCK_SIZE) || this->is_in(P.x, P.y + BLOCK_SIZE);
 }
-
 void player::shoot(list < bullet > &bullets, ALLEGRO_SAMPLE * shoot)
 {
 	if (this->shots_left > 0 && this->ammo > 0)
