@@ -1,20 +1,25 @@
 __author__ = 'Kalmar'
-import pygame
 from math import cos, sin
-from conversation import Conversation, Player, Bullet
+
+import pygame
+import thread
 import settings
+from simple import Simple
 
 
 class Gui(object):
     server = None
     players = []
     bullets = []
+    command = 0
+    bot = None
     display = None
+    player_command = None
     counter = 0
     commands = {pygame.K_RIGHT: 'MOVE_RIGHT', pygame.K_LEFT: 'MOVE_LEFT', pygame.K_UP: 'MOVE_UP', pygame.K_DOWN: 'MOVE_DOWN', pygame.K_PERIOD: 'ROT_RIGHT', pygame.K_COMMA: 'ROT_LEFT', pygame.K_SLASH: 'SHOOT'}
 
-    def __init__(self):
-        self.server = Conversation()
+    def __init__(self, server):
+        self.server = server
         pygame.init()
         self.display = pygame.display.set_mode((int(settings.MAP_SIZE), int(settings.MAP_SIZE+settings.FOOTER_SIZE)), 0, 24)
         pygame.display.set_caption("The Game client - {}".format(settings.IP))
@@ -75,7 +80,7 @@ class Gui(object):
                 if player.ammo > 0:
                     self.bullets.append(player.shoot())
 
-    def send_keyboard(self):
+    def add_keyboard(self):
         move = []
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
@@ -83,7 +88,7 @@ class Gui(object):
         for i in self.commands:
             if keys[i]:
                 move.append(self.commands[i])
-        self.server.send_commands(move)
+        self.command |= self.server.parse_command(move)
 
     def check_hits(self):
         for i in xrange(len(self.bullets)):
@@ -104,18 +109,48 @@ class Gui(object):
                     self.players[i].counter = 0
                     self.players[i].ammo += 1
 
+    def send(self):
+        self.server.send_commands(self.command)
+
+    def prepare(self):
+        self.command = 0
+        if self.player_command:
+            args = self.player_command.split(" ")
+            try:
+                result = eval("self.bot.gui_{}({})".format(args[0], ",".join(args[1:])))
+                self.command |= result
+            except UserWarning:
+                self.player_command = None
+                print "\rDONE"
+            except Exception:
+                print"\rWrong command"
+                self.player_command = None
+
+
+    def shell(self):
+        while True:
+            self.player_command = raw_input("")
+
+    def run_commands(self):
+        thread.start_new_thread(self.shell, ())
+
     def run(self):
         self.server.hello()
+        self.bot = Simple(self.server)
+        self.run_commands()
         while True:
             pygame.event.pump()
             self.players = self.server.get_players(self.players)
+            self.bot.gui_connect(self.players)
             if self.players:
+                self.prepare()
                 self.move_bullets()
                 self.reload()
                 self.shoot()
                 self.check_hits()
                 self.draw()
-                self.send_keyboard()
+                self.add_keyboard()
+                self.send()
 
 
 

@@ -93,22 +93,30 @@ class Conversation(object):
             players.append(pl)
         return players
 
-    def parse_client(self, commands):
-        buf = self.pin
+    def parse_command(self, commands):
         com = 0
         for i in commands:
             try:
                 com |= (1 << self.command_set[i])
             except KeyError:
-                print "parse_client: wrong command"
-        return buf+chr(com & 0xff)
+                print "\rparse_client: wrong command"
+        return com
+
+    def prepare_buf(self, command):
+        return self.pin + chr(command & 0xff)
+
+    def parse_client(self, commands):
+        if isinstance(commands, int):
+            return self.prepare_buf(commands)
+        com = self.parse_command(commands)
+        return self.prepare_buf(com)
 
     def get_players(self, old_players=None):
         try:
             buf = self.sock.recv(4096)
             return self.parse_server(buf, old_players)
         except timeout:
-            print "get_board: connection timed out"
+            print "\rget_players: connection timed out"
             return None
 
     def send_commands(self, commands=()):

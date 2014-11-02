@@ -2,8 +2,8 @@ __author__ = 'Kalmar'
 
 IP = "192.168.1.4"
 PORT = 8081
-PIN = 0xbc5c2cdc
-MY_NR = 1
+PIN = 0x00dd9e31
+MY_NR = 0
 HP = 200
 DEBUG = False
 THICKNESS = 2
