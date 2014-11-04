@@ -34,6 +34,7 @@ class Player(object):
     angle = None
     hp = settings.HP
     ammo = settings.AMMO
+    reloading = False
     alive = True
     shot = False
     full = True
@@ -79,8 +80,7 @@ class Conversation(object):
             tmp = buf[(1+12*i):(1+12*(i+1))]
             pl = Player()
             if preserve:
-                pl.ammo = old_players[i].ammo
-                pl.counter = old_players[i].counter
+                pl = old_players[i]
             pl.player_nr = i
             pl.x = unpack("H", tmp[:2])[0]
             pl.y = unpack("H", tmp[2:4])[0]
@@ -119,8 +119,8 @@ class Conversation(object):
             print "\rget_players: connection timed out"
             return None
 
-    def send_commands(self, commands=()):
+    def send_command(self, commands=()):
         self.sock.sendall(self.parse_client(commands))
 
     def hello(self):
-        self.send_commands()
+        self.send_command()

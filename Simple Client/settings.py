@@ -1,9 +1,9 @@
 __author__ = 'Kalmar'
 
-IP = "192.168.1.4"
+IP = "127.0.0.1"
 PORT = 8081
-PIN = 0x00dd9e31
-MY_NR = 0
+PIN = 0x318f0682
+MY_NR = 1
 HP = 200
 DEBUG = False
 THICKNESS = 2
@@ -18,3 +18,20 @@ BLOCK_SPEED = MAP_SIZE / FPS
 BULLET_SPEED = 1.5 * BLOCK_SPEED
 BLOCK_ACCELERATION = 1.0 * BLOCK_SPEED / FPS * 2
 GUN_RESOLUTION = 1.0 * BLOCK_SIZE / MAP_SIZE * 2
+
+colors = dict(BLACK="\x1b[30m",
+              RED="\x1b[31m",
+              GREEN="\x1b[32m",
+              YELLOW="\x1b[33m",
+              BLUE="\x1b[34m",
+              PURPLE="\x1b[35m",
+              CYAN="\x1b[36m",
+              RESET="\x1b[0m",
+)
+
+
+def color(txt, txt_color):
+    try:
+        return colors[txt_color.upper()] + txt + colors['RESET']
+    except KeyError:
+        return txt
