@@ -3,7 +3,7 @@ from math import cos, sin
 
 import pygame
 import thread
-from combat import Combat
+from combat import Combat, ActionFinished
 from conversation import Conversation
 import settings
 
@@ -98,48 +98,31 @@ class Hybrid(object):
                     self.bullets[i].alive = False
                     break
 
-    def reload(self):
-        for i in xrange(len(self.players)):
-            self.players[i].counter += 1
-            if self.players[i].ammo > 0:
-                if self.players[i].counter > 1:
-                    self.players[i].counter = 0
-                    self.players[i].ammo += 0 if self.players[i].ammo >= settings.AMMO else 1
-            else:
-                if self.players[i].counter > 50:
-                    self.players[i].counter = 0
-                    self.players[i].ammo += 1
-
     def send(self):
         self.server.send_command(self.command)
 
     def prepare(self):
-
-        if self.players[settings.MY_NR].ammo < 10:
-            self.players[settings.MY_NR].reloading = True
-        if self.players[settings.MY_NR].ammo > 0.5 * settings.AMMO:
-            if self.players[settings.MY_NR].reloading:
-                self.players[settings.MY_NR].reloading = False
-
         self.command = 0
         if self.player_command:
             args = self.player_command.split(" ")
             try:
+                args[1:] = map(lambda x: "\"{}\"".format(x) if isinstance(x, str) else x, args[1:])
                 result = eval("self.bot.{}({})".format(args[0], ",".join(args[1:])))
                 if isinstance(result, int):
                     self.command |= result
                 else:
                     print settings.color("Wrong command:", 'RED'), settings.color("self.bot.{}({})".format(args[0], ",".join(args[1:])), "YELLOW")
                     self.player_command = None
-            except UserWarning:
+            except ActionFinished as e:
                 self.player_command = None
-                print settings.color("Done", 'GREEN')
+                if settings.DEBUG:
+                    print e
             except AttributeError:
                 print settings.color("Wrong command:", 'RED'), settings.color("self.bot.{}({})".format(args[0], ",".join(args[1:])), "YELLOW")
                 self.player_command = None
-            except:
-                print settings.color("Something unexpected happend! Ch3ck 7h15 0u7!", "RED")
-                self.player_command = None
+            #except:
+             #   print settings.color("Something unexpected happend! Ch3ck 7h15 0u7!", "RED")
+              #  self.player_command = None
 
     def shell(self):
         while True:
@@ -155,11 +138,10 @@ class Hybrid(object):
         while True:
             pygame.event.pump()
             self.players = self.server.get_players(self.players)
-            self.bot.update(self.players)
             if self.players:
+                self.bot.update(self.players)
                 self.prepare()
                 self.move_bullets()
-                self.reload()
                 self.shoot()
                 self.check_hits()
                 self.draw()

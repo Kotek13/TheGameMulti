@@ -1,6 +1,6 @@
 __author__ = 'Kalmar'
 from hybrid import Hybrid
-from simple import Simple
+from bot import Bot
 from conversation import Conversation
 
 server = Conversation()

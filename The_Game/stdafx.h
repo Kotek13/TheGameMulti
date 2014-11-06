@@ -15,7 +15,7 @@
 #include <ctime>
 
 #define BLOCK_SIZE 15
-#define MAP_SIZE 600
+#define MAP_SIZE 700
 #define FPS 60
 #define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/FPS*2)
 #define BLOCK_MAX_SPEED (MAP_SIZE/FPS)

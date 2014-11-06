@@ -6,6 +6,8 @@ from struct import pack, unpack
 from math import cos, sin
 import settings
 
+DEBUG_SERVER = False
+
 
 class Bullet(object):
     x = 0
@@ -30,6 +32,10 @@ class Bullet(object):
 
 class Player(object):
     x = None
+    v_x = None
+    v_y = None
+    old_x = 0
+    old_y = 0
     y = None
     angle = None
     hp = settings.HP
@@ -54,6 +60,7 @@ class Player(object):
 
 class Conversation(object):
     sock = None
+    frames_missed_in_row = 0
     pin = None
     command_set = dict(MOVE_RIGHT=0, MOVE_LEFT=1, MOVE_UP=2, MOVE_DOWN=3, ROT_RIGHT=4, ROT_LEFT=5, SHOOT=6)
     flags = dict(ALIVE=0, SHOT=1, FULL=2)
@@ -81,6 +88,8 @@ class Conversation(object):
             pl = Player()
             if preserve:
                 pl = old_players[i]
+                pl.old_x = pl.x
+                pl.old_y = pl.y
             pl.player_nr = i
             pl.x = unpack("H", tmp[:2])[0]
             pl.y = unpack("H", tmp[2:4])[0]
@@ -99,7 +108,8 @@ class Conversation(object):
             try:
                 com |= (1 << self.command_set[i])
             except KeyError:
-                print "\rparse_client: wrong command"
+                if settings.DEBUG or DEBUG_SERVER:
+                    print "parse_client: wrong command"
         return com
 
     def prepare_buf(self, command):
@@ -114,9 +124,15 @@ class Conversation(object):
     def get_players(self, old_players=None):
         try:
             buf = self.sock.recv(4096)
+            self.frames_missed_in_row = 0
             return self.parse_server(buf, old_players)
         except timeout:
-            print "\rget_players: connection timed out"
+            self.frames_missed_in_row += 1
+            if self.frames_missed_in_row > 3.0 / self.sock.gettimeout():
+                print settings.color("Connection lost!", "RED")
+                exit()
+            if settings.DEBUG or DEBUG_SERVER:
+                print "get_players: connection timed out"
             return None
 
     def send_command(self, commands=()):
