@@ -105,13 +105,13 @@ void player::change_state()
 void player::step()
 {
 	if (this->x + this->v_x > MAP_SIZE - BLOCK_SIZE)
-		this->x = 0;
+		this->x = 0; // this->v_x = -this->v_x; //
 	if (this->x + this->v_x < 0)
-		this->x = MAP_SIZE - BLOCK_SIZE;
+		this->x = MAP_SIZE - BLOCK_SIZE; // this->v_x = -this->v_x; //
 	if (this->y + this->v_y > MAP_SIZE - BLOCK_SIZE)
-		this->y = 0;
+		this->y = 0; // this->v_y = -this->v_y; //
 	if (this->y + this->v_y < 0)
-		this->y = MAP_SIZE - BLOCK_SIZE;
+		this->y = MAP_SIZE - BLOCK_SIZE; //this->v_y = -this->v_y; // 
 
 	this->x = this->x + this->v_x;
 	this->y = this->y + this->v_y;

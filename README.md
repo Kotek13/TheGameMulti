@@ -9,8 +9,11 @@ All client-side code is written in python.
 
 Requirements:
 	Client:
-		1) Python 2.7
+		1) Python 2
 		2) Pygame
 	Server:
 		1) Windows
 		2) VS2012 Redistributable
+		
+Questions:
+	1) What is better: bouncing or folded space???

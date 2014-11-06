@@ -36,6 +36,8 @@ class Player(object):
     v_y = None
     old_x = 0
     old_y = 0
+    old_vx = 0
+    old_vy = 0
     y = None
     angle = None
     hp = settings.HP
@@ -90,6 +92,8 @@ class Conversation(object):
                 pl = old_players[i]
                 pl.old_x = pl.x
                 pl.old_y = pl.y
+                pl.old_vx = pl.v_x
+                pl.old_vy = pl.v_y
             pl.player_nr = i
             pl.x = unpack("H", tmp[:2])[0]
             pl.y = unpack("H", tmp[2:4])[0]

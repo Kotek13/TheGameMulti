@@ -76,7 +76,7 @@ class Bot(object):  # to be continued...
                 self.commands.append([self.combat.kill, [lowest_other, True]])
 
     def algorithm(self):
-        self.move_randomly(0.5)
+        self.move_randomly(0.3)
         self.kill_lowest_hp()
         self.handle_commands()
 

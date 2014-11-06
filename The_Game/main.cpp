@@ -264,7 +264,7 @@ int main(void)
 	queue = al_create_event_queue();
 	timer = al_create_timer(1.0 / FPS);
 
-	al_hide_mouse_cursor(okno);
+	//al_hide_mouse_cursor(okno);
 	al_start_timer(timer);
 	al_register_event_source(queue, al_get_display_event_source(okno));
 	al_register_event_source(queue, al_get_timer_event_source(timer));

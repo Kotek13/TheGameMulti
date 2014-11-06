@@ -40,6 +40,9 @@ class Combat(object):
         self.server = server
 
     def reload(self):
+        for player in self.players:
+            if player.shot:
+                player.shoot()
         if self.players[settings.MY_NR].ammo < 10:
             self.players[settings.MY_NR].reloading = True
         if self.players[settings.MY_NR].ammo > 0.5 * settings.AMMO:

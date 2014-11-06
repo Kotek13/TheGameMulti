@@ -55,7 +55,7 @@ void get_ip(sockaddr_in& server_info)
 		}
 		
 	}
-	server_info.sin_addr.s_addr = inet_addr("127.0.0.1");
+	//server_info.sin_addr.s_addr = inet_addr("127.0.0.1");
 }
 
 void setup_server(SOCKET& server_socket)

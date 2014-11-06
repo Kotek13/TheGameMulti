@@ -18,7 +18,7 @@
 #define MAP_SIZE 700
 #define FPS 60
 #define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/FPS*2)
-#define BLOCK_MAX_SPEED (MAP_SIZE/FPS)
+#define BLOCK_MAX_SPEED ((float)MAP_SIZE/FPS)
 #define BULLET_SIZE 2
 #define GUN_SIZE 1.9
 #define FOOTER_SIZE 20

@@ -40,17 +40,25 @@ class Combat(object):
         self.server = server
 
     def reload(self):
-        if self.players[settings.MY_NR].ammo < 10:
+        for player in self.players:
+            if player.shot:
+                player.shoot()
+        #print self.players[settings.MY_NR].ammo
+        if self.players[settings.MY_NR].ammo < 20:
             self.players[settings.MY_NR].reloading = True
         if self.players[settings.MY_NR].ammo > 0.5 * settings.AMMO:
             if self.players[settings.MY_NR].reloading:
                 self.players[settings.MY_NR].reloading = False
         for i in xrange(len(self.players)):
             self.players[i].counter += 1
+            if self.players[i].full:
+                self.players[i].ammo = settings.AMMO
             if self.players[i].ammo > 0:
                 if self.players[i].counter > 1:
                     self.players[i].counter = 0
                     self.players[i].ammo += 0 if self.players[i].ammo >= settings.AMMO else 1
+                    if self.players[i].ammo >= settings.AMMO:
+                        self.players[i].full = True
             else:
                 if self.players[i].counter > 50:
                     self.players[i].counter = 0
@@ -88,7 +96,7 @@ class Combat(object):
                 return self.server.rot("RIGHT")
 
     def target_dynamic_player(self, player_number):
-        # TODO: Take length of the gun into consideration
+        # TODO: Take length of the gun and bouncing into consideration
         m_angle = self.players[settings.MY_NR].angle
         v_x, v_y = self.players[player_number].v_x, -self.players[player_number].v_y
         dx, dy = self.players[player_number].x - self.players[settings.MY_NR].x, - self.players[player_number].y + \
@@ -111,7 +119,7 @@ class Combat(object):
             else:
                 command = self.server.rot("RIGHT")
 
-        if fabs(ang_diff) <= (8 * settings.GUN_RESOLUTION):
+        if fabs(ang_diff) <= (6 * settings.GUN_RESOLUTION):
             raise ActionFinished(self.target_dynamic_player, "Moving player {} almost targeted".format(player_number), [command])
         if fabs(ang_diff) <= 0.55 * settings.GUN_RESOLUTION:
             raise ActionFinished(self.target_dynamic_player, "Moving player {} targeted".format(player_number))
