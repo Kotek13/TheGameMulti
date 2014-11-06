@@ -1,8 +1,8 @@
 __author__ = 'Kalmar'
 
-import settings
 from math import fabs, atan2, pi, copysign, sqrt
 import random
+import settings
 
 DEBUG_COMBAT = False
 
@@ -66,41 +66,26 @@ class Combat(object):
         self.get_velocities()
         self.reload()
 
-    def shoot(self):
-        return self.server.parse_command(["SHOOT"])
-
-    def rot(self, direction):
-        if direction.upper() == "RIGHT":
-            return self.server.parse_command(["ROT_RIGHT"])
-        if direction.upper() == "LEFT":
-            return self.server.parse_command(["ROT_LEFT"])
-        return 0
-
-    def angle_difference(self, player_number):
+    def target_static_player(self, player_number):
         m_angle = self.players[settings.MY_NR].angle
-        m_x, m_y = self.players[settings.MY_NR].x + settings.BLOCK_SIZE / 2.0, -(
-            self.players[settings.MY_NR].y + settings.BLOCK_SIZE / 2.0)
-        t_x, t_y = self.players[player_number].x + settings.BLOCK_SIZE / 2.0, - (
-            self.players[player_number].y + settings.BLOCK_SIZE / 2.0)
+        m_x, m_y = self.players[settings.MY_NR].x, -self.players[settings.MY_NR].y
+        t_x, t_y = self.players[player_number].x, -self.players[player_number].y
         v = (t_x - m_x, t_y - m_y)
         tmp = atan2(v[1], v[0])
         v_ang = tmp if tmp >= 0 else tmp + 2 * pi
-        return v_ang - m_angle
-
-    def target_static_player(self, player_number):
-        ang_diff = self.angle_difference(player_number)
+        ang_diff = v_ang - m_angle
         if fabs(ang_diff) <= (0.55 * settings.GUN_RESOLUTION):
             raise ActionFinished(self.target_static_player, "Player {} targeted".format(player_number))
         if ang_diff < 0:
             if ang_diff >= -pi:
-                return self.rot("RIGHT")
+                return self.server.rot("RIGHT")
             else:
-                return self.rot("LEFT")
+                return self.server.rot("LEFT")
         if ang_diff > 0:
             if ang_diff < pi:
-                return self.rot("LEFT")
+                return self.server.rot("LEFT")
             else:
-                return self.rot("RIGHT")
+                return self.server.rot("RIGHT")
 
     def target_dynamic_player(self, player_number):
         # TODO: Take length of the gun into consideration
@@ -117,14 +102,14 @@ class Combat(object):
 
         if ang_diff < 0:
             if ang_diff >= -pi:
-                command = self.rot("RIGHT")
+                command = self.server.rot("RIGHT")
             else:
-                command = self.rot("LEFT")
+                command = self.server.rot("LEFT")
         if ang_diff > 0:
             if ang_diff < pi:
-                command = self.rot("LEFT")
+                command = self.server.rot("LEFT")
             else:
-                command = self.rot("RIGHT")
+                command = self.server.rot("RIGHT")
 
         if fabs(ang_diff) <= (8 * settings.GUN_RESOLUTION):
             raise ActionFinished(self.target_dynamic_player, "Moving player {} almost targeted".format(player_number), [command])
@@ -132,9 +117,9 @@ class Combat(object):
             raise ActionFinished(self.target_dynamic_player, "Moving player {} targeted".format(player_number))
         return command
 
-    def kill(self, player_number, mode='dynamic'):
+    def kill(self, player_number, dynamic=True):
         global DEBUG_COMBAT
-        if mode.lower() == 'dynamic':
+        if dynamic:
             function = self.target_dynamic_player
         else:
             function = self.target_static_player
@@ -154,7 +139,7 @@ class Combat(object):
                     for i in e.return_values:
                         command |= i
                 if not self.players[settings.MY_NR].reloading:
-                    command |= self.shoot()
+                    command |= self.server.shoot()
                 return command
             else:
                 e.oh_crap()
@@ -175,14 +160,14 @@ class Combat(object):
                                                                     settings.BLOCK_ACCELERATION / 2):
                 raise ActionFinished(self.move, "Moved {}".format(direction.lower()))
             else:
-                return self.server.parse_command(["MOVE_{}".format(direction).upper()])
+                return self.server.move(direction.upper())
         if direction.upper() == "UP" or direction.upper() == "DOWN":
             if self.near(self.players[number].v_y, dic[direction.upper()] * percent,
                          settings.BLOCK_ACCELERATION) and self.near(self.players[number].v_x, 0,
                                                                     settings.BLOCK_ACCELERATION / 2):
                 raise ActionFinished(self.move, "Moved {}".format(direction.lower()))
             else:
-                return self.server.parse_command(["MOVE_{}".format(direction).upper()])
+                return self.server.move(direction.upper())
 
     def random_movement(self, percent=1.0):
         if not self.movement_direction:

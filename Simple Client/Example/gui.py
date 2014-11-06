@@ -81,7 +81,7 @@ class Gui(object):
                 if player.ammo > 0:
                     self.bullets.append(player.shoot())
 
-    def add_keyboard(self):
+    def check_keystrokes(self):
         move = []
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
@@ -121,7 +121,7 @@ class Gui(object):
                 self.shoot()
                 self.check_hits()
                 self.draw()
-                self.add_keyboard()
+                self.check_keystrokes()
 
 
 if __name__ == '__main__':
@@ -129,5 +129,4 @@ if __name__ == '__main__':
     settings.IP = sys.argv[1]
     settings.MY_NR = int(sys.argv[2], 10)
     settings.PIN = int(sys.argv[3], 16)
-    server = Conversation()
-    Gui(server).run()
+    Gui(Conversation()).run()

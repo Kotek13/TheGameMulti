@@ -3,8 +3,8 @@ __version__ = '0.1'
 
 from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_UDP, timeout
 from struct import pack, unpack
-from math import cos, sin
 import settings
+from math import cos, sin
 
 DEBUG_SERVER = False
 
@@ -134,6 +134,26 @@ class Conversation(object):
             if settings.DEBUG or DEBUG_SERVER:
                 print "get_players: connection timed out"
             return None
+
+    def shoot(self):
+        return self.parse_command(["SHOOT"])
+
+    def rot(self, direction):
+        if direction.upper() == "RIGHT":
+            return self.parse_command(["ROT_RIGHT"])
+        if direction.upper() == "LEFT":
+            return self.parse_command(["ROT_LEFT"])
+        return 0
+
+    def move(self, direction):
+        if direction.upper() == "LEFT":
+            return self.parse_command(["MOVE_LEFT"])
+        if direction.upper() == "RIGHT":
+            return self.parse_command(["MOVE_RIGHT"])
+        if direction.upper() == "UP":
+            return self.parse_command(["MOVE_UP"])
+        if direction.upper() == "DOWN":
+            return self.parse_command(["MOVE_DOWN"])
 
     def send_command(self, commands=()):
         self.sock.sendall(self.parse_client(commands))

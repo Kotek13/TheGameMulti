@@ -1,9 +1,12 @@
+__author__ = 'Kalmar'
+
+from math import fabs
 import settings
 from combat import Combat, ActionFinished
 from conversation import Conversation
 
+
 DEBUG_BOT = False
-TYPE = 'static'
 
 
 class Bot(object):  # to be continued...
@@ -37,23 +40,44 @@ class Bot(object):  # to be continued...
                 self.commands[:] = [x for x in self.commands if x != i]
 
     def is_there(self, command, args=None):
-        for i in self.commands:
+        for i in xrange(len(self.commands)):
             if args:
-                if [command, args] == i:
-                    return True
+                if [command, args] == self.commands[i]:
+                    return i
             else:
-                if i[0] == command:
-                    return True
-        return False
+                if self.commands[i][0] == command:
+                    return i
+        return -1
+
+    def move_randomly(self, percentage=1.0):
+        assert isinstance(percentage, float)
+        if self.is_there(self.combat.random_movement, [percentage]) == -1:
+            self.commands.append([self.combat.random_movement, [percentage]])
+
+    def kill_lowest_hp(self):
+        lowest_other = 0
+
+        for i in sorted(self.players, key=lambda x: x.hp):
+            if i.player_nr != settings.MY_NR and i.alive:
+                lowest_other = i.player_nr
+                break
+
+        find = self.is_there(self.combat.kill)
+        if find != -1:
+                pl_nr = self.commands[find][1][0]
+                if fabs(self.players[pl_nr].v_x) == 0 and fabs(self.players[pl_nr].v_y) == 0:
+                    self.commands[find][1] = [lowest_other, False]
+                else:
+                    self.commands[find][1] = [lowest_other, True]
+        else:
+            if fabs(self.players[lowest_other].v_x) == 0 and fabs(self.players[lowest_other].v_y) == 0:
+                self.commands.append([self.combat.kill, [lowest_other, False]])
+            else:
+                self.commands.append([self.combat.kill, [lowest_other, True]])
 
     def algorithm(self):
-        global TYPE
-        if not self.is_there(self.combat.random_movement, [0.5]):
-            self.commands.append([self.combat.random_movement, [0.5]])
-        if not self.is_there(self.combat.kill):
-            for i in sorted(self.players, key=lambda x: x.hp):
-                if i.alive and i.player_nr != settings.MY_NR:
-                    self.commands.append([self.combat.kill, [i.player_nr, TYPE]])
+        self.move_randomly(0.5)
+        self.kill_lowest_hp()
         self.handle_commands()
 
     def run(self):
@@ -71,5 +95,4 @@ if __name__ == '__main__':
     settings.IP = sys.argv[1]
     settings.MY_NR = int(sys.argv[2], 10)
     settings.PIN = int(sys.argv[3], 16)
-    TYPE = sys.argv[4]
     Bot(Conversation()).run()
