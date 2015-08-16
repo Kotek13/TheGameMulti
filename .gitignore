@@ -21,10 +21,11 @@ $RECYCLE.BIN/
 *.opensdf
 Debug/
 Release/
-Simple Client/.idea/
-pre_client.py
-The_Game/Debug/
-The_Game/Release/
+*.idea*
+
+*Debug/*
+*Release/*
+Client/Bot
 
 # Windows Installer files
 *.cab
