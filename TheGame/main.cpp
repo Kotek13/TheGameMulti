@@ -144,10 +144,12 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 			std::cout << "WTF?" << endl;
 	}
 
+	player.login_hash = crc32(0, player.login.c_str(), player.login.length());
+
 	std::cout << endl << "ID=" << player.id << endl;
 	std::cout << "LOGIN=" << player.login << endl;
 	std::cout << "COLOR=(" << player.color.r * 255 << "," << player.color.g * 255 << "," << player.color.b * 255 << ")" << endl;
-	player.login_hash = crc32(0, player.login.c_str(), player.login.length());
+	printf("HASH=%#.08x\n", player.login_hash);
 
 	bool test = false;
 
@@ -163,9 +165,6 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 		}	
 
 	} while (test);
-
-	std::cout << "X=" << player.x << endl;
-	std::cout << "Y=" << player.y << endl;
 
 	game->players.push_back(player);
 
@@ -237,7 +236,7 @@ void send_state(char * buf)
 	sendall(buf, len);
 	delete[] msg;
 }
-int game_loop(void) {
+void game_loop(void) {
 
 	char * buf = new char[4096];
 	while (!al_key_down(&game->klawiatura, ALLEGRO_KEY_ESCAPE) && !game->interrupted)
@@ -281,13 +280,11 @@ int game_loop(void) {
 		if (game->event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 		{
 			game->interrupted = 1;
-			return -1;
 		}
 		draw_footer(); // draw footer
 		al_flip_display(); // update window
 	}
 	game->interrupted = 1;
-	return -1;
 }
 
 void clean_exit(int exit_code)

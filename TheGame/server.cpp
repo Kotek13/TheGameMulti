@@ -45,6 +45,7 @@ void setup_server(unsigned short port)
 	socket_init();
 	int res = 0;
 	TG_SOCKET tmp_socket;
+
 	struct sockaddr_in server_info;
 	server_info.sin_family = AF_INET;
 	server_info.sin_port = htons(port);
@@ -60,6 +61,14 @@ void setup_server(unsigned short port)
 		printf("Error at socket(): %ld\n", 1);
 #endif
 		exit(EXIT_FAILURE);
+	}
+
+	struct timeval tv;
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;
+
+	if (setsockopt(tmp_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
+		perror("Error");
 	}
 
 	if (bind(tmp_socket, (struct sockaddr *)&server_info, sizeof(server_info)) == SOCKET_ERROR) {
@@ -127,42 +136,46 @@ void run_server(void) {
 
 	setup_server(game->port);
 
-	printf("server started.\n\nLet's play!\n\n");
+	std::cout << "Server started with SOCKET " << server_socket << endl;;
 	
 	while (!game->interrupted)
 	{
-		ZeroMemory(buf, 10);
-		if ((len = recvfrom(server_socket, buf, 5, 0, (struct sockaddr*)&client, &cl_len)) == SOCKET_ERROR)
-		{
-			vector<player_t>::iterator pl = find_by_ip(client);
+			ZeroMemory(buf, 10);
+			if ((len = recvfrom(server_socket, buf, 5, 0, (struct sockaddr*)&client, &cl_len)) == SOCKET_ERROR)
+			{
+				if (WSAGetLastError() == WSAETIMEDOUT)
+					continue;
+
+				vector<player_t>::iterator pl = find_by_ip(client);
+
+				if (pl != game->players.end())
+				{
+					if (pl->connected == true)
+						printf("[-] %s disconnected\n", pl->login.c_str());
+					pl->connected = false;
+				}
+
+
+				continue;
+			}
+
+			msg = (struct client_msg*)(buf);
+
+			vector<player_t>::iterator pl = find(msg->login_hash);
 
 			if (pl != game->players.end())
 			{
-				if (pl->connected == true)
-					printf("[-] %s disconnected\n", pl->login);
-				pl->connected = false;
+				memcpy(pl->dane, &client, sizeof(struct sockaddr_in));
+				pl->state->choices = (unsigned char)msg->choices;
+				if (pl->connected == false)
+					printf("[+] %s connected!\n", pl->login.c_str());
+				pl->connected = true;
 			}
-				
-
-			continue;
-		}
-			
-		
-		msg = (struct client_msg*)(buf);
-		
-		vector<player_t>::iterator pl = find(msg->login_hash);
-
-		if (pl != game->players.end())
-		{
-			memcpy(pl->dane, &client, sizeof(struct sockaddr_in));
-			pl->state->choices = (unsigned char)msg->choices;
-			if (pl->connected == false)
-				printf("[+] %s connected!\n", pl->login);
-			pl->connected = true;
-		}
+		//}
 	}
 	
 	closesocket(server_socket);
 	WSACleanup();
-	return;
+	std::cout << "Server closed" << endl;
+	ExitThread(0);
 }
