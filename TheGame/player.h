@@ -1,5 +1,5 @@
-#ifndef PLAYER
-#define PLAYER
+#ifndef _PLAYER_H
+#define _PLAYER_H
 
 #include "stdafx.h"
 #include "bullet.h"

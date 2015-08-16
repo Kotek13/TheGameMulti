@@ -1,18 +1,30 @@
+#ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
+
 #include <Windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+#else
+#define EXIT_FAILURE 1
+#endif
+
 #include "bullet.h"
 #include "server.h"
 
+#ifdef WIN32
+typedef SOCKET TG_SOCKET;
+#else
+typedef int TG_SOCKET;
+#define INVALID_SOCKET -1;
+#endif
+
 using namespace std;
 
-#pragma comment(lib, "Ws2_32.lib")
-
-#define PORT 8081
-SOCKET server_socket = INVALID_SOCKET;
+TG_SOCKET server_socket = INVALID_SOCKET;
 
 size_t crc32(size_t hash, char * string, size_t len)
 {
@@ -21,57 +33,39 @@ size_t crc32(size_t hash, char * string, size_t len)
 	return hash;
 }
 
-void WSA_init(WSADATA& wsaData)
+void socket_init()
 {
+#ifdef WIN32
+	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0)
 	{
 		printf("WSAStartup failed: %d\n", iResult);
 		exit(-1);
 	}
+#else
+#endif
 }
 
-void get_ip(sockaddr_in& server_info)
+void setup_server(TG_SOCKET& server_socket, unsigned short port)
 {
-	char ac[80];
-	if (gethostname(ac, sizeof(ac)) == SOCKET_ERROR) {
-		fprintf(stderr, "Error when getting local host name.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	struct hostent *phe = gethostbyname(ac);
-	if (phe == 0) {
-		fprintf(stderr, "Yow! Bad host lookup.\n");
-		exit(EXIT_FAILURE);
-	}
-	int VM = 0x0138A8C0;
-	for (int i = 0; phe->h_addr_list[i] != 0; ++i) {
-		struct in_addr addr;
-		memcpy(&addr, phe->h_addr_list[i], sizeof(struct in_addr));
-		if (*(int*)(&addr) != VM)
-		{
-			fprintf(stderr, "Trying IP: %s...", inet_ntoa(addr));
-			memcpy(&server_info.sin_addr, &addr, 4);
-		}
-		
-	}
-	//server_info.sin_addr.s_addr = inet_addr("127.0.0.1");
-}
-
-void setup_server(SOCKET& server_socket)
-{
+	socket_init();
 	int res = 0;
-	SOCKET tmp_socket;
+	TG_SOCKET tmp_socket;
 	struct sockaddr_in server_info;
 	server_info.sin_family = AF_INET;
-	server_info.sin_port = htons(PORT);
-	get_ip(server_info);
+	server_info.sin_port = htons(port);
+	server_info.sin_addr.s_addr = INADDR_ANY;
 	
 	tmp_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
 	if (tmp_socket == INVALID_SOCKET) {
+#ifdef WIN32
 		printf("Error at socket(): %ld\n", WSAGetLastError());
 		WSACleanup();
+#else
+		printf("Error at socket(): %ld\n", 1);
+#endif
 		exit(EXIT_FAILURE);
 	}
 
@@ -126,9 +120,7 @@ struct client_msg
 	char choices;
 };
 
-void run_server() {
-	WSADATA wsaData;
-	WSA_init(wsaData);
+void run_server(thread_params * params) {
 	int res = 0;
 	struct client_msg * msg;
 	struct sockaddr_in client;
@@ -136,7 +128,7 @@ void run_server() {
 	size_t len = 0;
 	int cl_len = sizeof client;
 	ZeroMemory(&client, sizeof client);
-	setup_server(server_socket);
+	setup_server(server_socket, params->port);
 	printf("server started.\n\nLet's play!\n\n");
 	while (1)
 	{

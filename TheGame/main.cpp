@@ -1,9 +1,13 @@
 #include "stdafx.h"
 #include "bullet.h"
 #include "server.h"
-#include <Windows.h>
 
-#define FOR(x) for (size_t i = 0; i < (x).size(); i++)
+#ifdef WIN32
+#include <Windows.h>
+#else
+#define ZeroMemory((buf),(nb)) memset((buf), 0, (nb))
+#include <pthread>
+#endif
 
 using namespace std;
 
@@ -24,6 +28,19 @@ void Message(const char * a)
 {
 	MessageBox(NULL, a, "Error", MB_OK);
 }
+
+void StartThread(void(*function)(thread_params*), unsigned short port)
+{
+	thread_params * params = new thread_params[1];
+	params->port = port;
+#ifdef WIN32
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)function, params, 0, NULL);
+#else
+	pthread thread;
+	pthread_create(&thread, 0, function, params);
+#endif
+}
+
 void check_collisions()
 {
 	for (size_t i = 0; i < players.size(); i++)
@@ -164,7 +181,7 @@ void send_state(char * buf)
 	const unsigned char n = (unsigned char)players.size();
 	struct server_msg * msg = new server_msg[1];
 	ZeroMemory(msg, sizeof server_msg);
-	ZeroMemory(buf, sizeof 4096);
+	ZeroMemory(buf, 4096);
 	char * p = buf;
 	size_t len = sizeof(server_msg)*n + 1;
 	if (len > 4096)
@@ -192,7 +209,6 @@ void send_state(char * buf)
 int game(void) {
 
 	setup_players();
-	size_t counter = 0;
 	char * buf = new char[4096];
 	while (!al_key_down(&klawiatura, ALLEGRO_KEY_ESCAPE))
 	{
@@ -202,37 +218,37 @@ int game(void) {
 			al_get_keyboard_state(&klawiatura);
 			al_clear_to_color(al_map_rgb(0, 0, 0));
 			
-			for (auto i = players.begin(); i < players.end(); i++)
+			for (auto i = players.begin(); i < players.end(); i++) // First players move
 				i->move();
 			
-			for (auto j = bullets.begin(); j != bullets.end(); j++)
+			for (auto j = bullets.begin(); j != bullets.end(); j++) // Then bullets
 			{
 				j->move();
 				if (!j->alive)
 					bullets.erase(j);
 			}
 
-			for (auto i = players.begin(); i < players.end(); i++)
+			for (auto i = players.begin(); i < players.end(); i++) // Then players shoot 
 				i->shoot(bullets, shoot);
 
-			check_collisions();
-			check_hits();
+			check_collisions(); // check collision
+			check_hits(); // and check hits
 
-			for (auto i = players.begin(); i != players.end(); i++)
+			for (auto i = players.begin(); i != players.end(); i++) // draw everything
 				i->draw();
 			for (auto i = bullets.begin(); i != bullets.end(); i++)
 				i->draw();
 
-			send_state(buf);
+			send_state(buf); // send new state to players
 		}
 		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			return -1;
-		draw_footer();
-		al_flip_display();
+		draw_footer(); // draw footer
+		al_flip_display(); // update window
 	}
 	return -1;
 }
-int main(void)
+int main(int argc, char **argv)
 {
 	al_init();
 	al_init_primitives_addon();
@@ -254,7 +270,7 @@ int main(void)
 
 	if (!font || !foot_font)
 	{
-		MessageBox(NULL, "Cannot load font!", "Error", MB_OK);
+		Message("Cannot load font!");
 		return 1;
 	}
 
@@ -269,7 +285,8 @@ int main(void)
 	al_register_event_source(queue, al_get_display_event_source(okno));
 	al_register_event_source(queue, al_get_timer_event_source(timer));
 	//al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)run_server, NULL, 0, NULL);
+	unsigned short port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
+	StartThread(run_server, port);
 	game();
 
 	bullets.clear();

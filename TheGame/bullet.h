@@ -1,5 +1,5 @@
-#ifndef BULLET
-#define BULLET
+#ifndef _BULLET_H
+#define _BULLET_H
 
 #include "stdafx.h"
 #include "player.h"
