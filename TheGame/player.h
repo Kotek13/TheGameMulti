@@ -29,7 +29,7 @@ struct player
 	size_t points;
 	size_t respawn;
 	size_t counter;
-	size_t login_hash;
+	uint32_t login_hash;
 	struct sockaddr_in * dane;
 	struct states * state;
 	ALLEGRO_COLOR color;

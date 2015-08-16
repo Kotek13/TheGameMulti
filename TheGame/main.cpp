@@ -1,6 +1,4 @@
 #include "stdafx.h"
-#include "bullet.h"
-#include "server.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -96,27 +94,34 @@ void check_hits()
 void draw_footer()
 {
 	vector<player_t>::iterator beg = game->players.begin();
-	size_t size = game->players.size();
 
 	for (vector<player_t>::iterator i = beg; i < game->players.end(); i++)
 	{
-		int dist = i - beg;
-		if (i->alive)
-		{
-			al_draw_filled_rectangle(MAP_SIZE / size * dist, MAP_SIZE + 2, MAP_SIZE / size * dist + MAP_SIZE / game->players.size() * i->hp / HP, MAP_SIZE + FOOTER_SIZE, i->color);
-		}
-		char * buffer = new char[100];
-		sprintf_s(buffer, 100, "[%c] %s [%d]", i->connected ? '+' : '-', i->login, i->points);
-		al_draw_line(MAP_SIZE / size * dist, MAP_SIZE + 1, MAP_SIZE / size * dist + MAP_SIZE / size * i->ammo / MAX_AMMO, MAP_SIZE + 1, al_map_rgb(255, 255, 255), 2);
-		al_draw_text(game->foot_font, COLOR_WHITE, MAP_SIZE / size * dist + MAP_SIZE / size / 2, MAP_SIZE + 1, ALLEGRO_ALIGN_CENTER, buffer);
+		int col = (i - beg) % 4;
+		int row = (i - beg) / 4;
 
+		// hp bar
+		if (i->alive)
+			al_draw_filled_rectangle(MAP_SIZE / 4 * col, MAP_SIZE + 2 + row * FOOTER_SIZE, MAP_SIZE / 4 * col + MAP_SIZE / 4 * i->hp / HP, MAP_SIZE + FOOTER_SIZE * (row + 1), i->color);
+
+		// ammo bar
+		al_draw_line(MAP_SIZE / 4 * col, MAP_SIZE + 1 + FOOTER_SIZE * row, MAP_SIZE / 4 * col + MAP_SIZE / 4 * i->ammo / MAX_AMMO, MAP_SIZE + 1 + FOOTER_SIZE * row, al_map_rgb(255, 255, 255), 2);
+
+		// login
+		char * buffer = new char[100];
+		sprintf_s(buffer, 100, "[%c] %s [%d]", i->connected ? '+' : '-', i->login.c_str(), i->points);
+		
+		al_draw_text(game->foot_font, COLOR_WHITE, MAP_SIZE / 4 * col + MAP_SIZE / 4 / 2, MAP_SIZE + 1 + FOOTER_SIZE * row, ALLEGRO_ALIGN_CENTER, buffer);
+		
 		delete[] buffer;
-	}
+	} 
+
 }
 
 static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 {
 	string key, value;
+	player_t player;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -124,14 +129,45 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 		value = string(argv[i]);
 
 		if (key == "ID")
-			cout << "ID=" << stoi(value);
+			player.id = stoi(value);
 		else if (key == "LOGIN")
-			cout << "LOGIN=" << value << endl;
+			player.login = value;
 		else if (key == "COLOR")
-			cout << "COLOR=(" << stoi(value.substr(0, 2), NULL, 16) << "," << stoi(value.substr(2, 2), NULL, 16) << "," << stoi(value.substr(4, 2), NULL, 16) << ")" << endl;
+		{
+			unsigned char r, g, b;
+			r = (unsigned char)stoi(value.substr(0, 2), NULL, 16) & 0xff;
+			g = (unsigned char)stoi(value.substr(2, 2), NULL, 16) & 0xff;
+			b = (unsigned char)stoi(value.substr(4, 2), NULL, 16) & 0xff;
+			player.color = al_map_rgb(r, g, b);
+		}
 		else
-			cout << "WTF?" << endl;
+			std::cout << "WTF?" << endl;
 	}
+
+	std::cout << endl << "ID=" << player.id << endl;
+	std::cout << "LOGIN=" << player.login << endl;
+	std::cout << "COLOR=(" << player.color.r * 255 << "," << player.color.g * 255 << "," << player.color.b * 255 << ")" << endl;
+	player.login_hash = crc32(0, player.login.c_str(), player.login.length());
+
+	bool test = false;
+
+	do
+	{
+		player.x = (float)rand() / ((float)RAND_MAX / MAP_SIZE);
+		player.y = (float)rand() / ((float)RAND_MAX / (MAP_SIZE - BLOCK_SIZE));
+
+		if (game->players.size())
+		{
+			for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end() - 1; i++)
+				test = test || player.collision(*i);
+		}	
+
+	} while (test);
+
+	std::cout << "X=" << player.x << endl;
+	std::cout << "Y=" << player.y << endl;
+
+	game->players.push_back(player);
 
 	return 0;
 }
@@ -140,7 +176,7 @@ int setup_players()
 {	
 	char * err_msg = 0;
 
-	cout << "Connecting to database TheGame.db ...";
+	std::cout << "Connecting to database TheGame.db ...";
 
 	srand(time(NULL));
 	
@@ -149,55 +185,22 @@ int setup_players()
 
 	if (sqlite3_open("TheGame.db", &game->db))
 	{
-		cout << "failure: " << sqlite3_errmsg(game->db) << endl;
+		std::cout << "failure: " << sqlite3_errmsg(game->db) << endl;
 		return -1;
 	}
 	else
-		cout << "success" << endl;;	
+		std::cout << "success" << endl;;	
 
 	sqlite3 * db = game->db;
 
 	if (sqlite3_exec(db, "SELECT * from USERS", query_players_cb,NULL, &err_msg) != SQLITE_OK)
 	{
-		cout << "SQL error: " << err_msg << endl;
+		std::cout << "SQL error: " << err_msg << endl;
 		sqlite3_free(err_msg);
 	}
 	else
-		cout << "Finished reading players" << endl;
+		std::cout << "Finished reading players" << endl;
 	
-	/*
-	while (fgets(buffer,100, fd) != NULL)
-	{
-		char * p = strchr(buffer, '#');
-
-		if (p == NULL)
-			exit(EXIT_FAILURE);
-
-		strncpy(logins[it], buffer, ((p-buffer) <= 10) ? (p-buffer) : 10);
-		int r, g, b;
-		sscanf(p + 1, "%2x%2x%2x", &r, &g, &b);
-		size_t login_hash = crc32(0, logins[it], 10);
-
-		printf("[%d] %s PIN: %08x {R: %d G: %d B: %d}\n",it, logins[it++], login_hash, r, g, b);
-
-		game->players.push_back(player());
-		game->players[game->players.size() - 1].color = al_map_rgb(r & 0xff, g & 0xff, b & 0xff);
-		game->players[game->players.size() - 1].login_hash = login_hash;
-		bool test;
-		do
-		{
-			test = false;
-			game->players.back().x = (float)rand() / ((float)RAND_MAX / MAP_SIZE);
-			game->players.back().y = (float)rand() / ((float)RAND_MAX / (MAP_SIZE-BLOCK_SIZE));
-
-			for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end() - 1; i++)
-				test = test || i->collision(*j);
-
-		} while (test);
-		ZeroMemory(buffer, 100);
-	}
-	printf("Done!\n");
-	*/
 }
 void send_state(char * buf)
 {
@@ -237,17 +240,18 @@ void send_state(char * buf)
 int game_loop(void) {
 
 	char * buf = new char[4096];
-
 	while (!al_key_down(&game->klawiatura, ALLEGRO_KEY_ESCAPE) && !game->interrupted)
 	{
 		al_wait_for_event(game->queue, &game->event);
 		if (game->event.type == ALLEGRO_EVENT_TIMER)
 		{
+
 			al_get_keyboard_state(&game->klawiatura);
 			al_clear_to_color(al_map_rgb(0, 0, 0));
 			
 			for (auto i = game->players.begin(); i < game->players.end(); i++) // First players move
 				i->move();
+
 			
 			for (auto j = game->bullets.begin(); j != game->bullets.end(); j++) // Then bullets
 			{
@@ -256,11 +260,16 @@ int game_loop(void) {
 					game->bullets.erase(j);
 			}
 
+
 			for (auto i = game->players.begin(); i < game->players.end(); i++) // Then players shoot 
 				i->shoot(&game->bullets, game->shoot);
 
+
 			check_collisions(); // check collision
+
+
 			check_hits(); // and check hits
+
 
 			for (auto i = game->players.begin(); i != game->players.end(); i++) // draw everything
 				i->draw();
@@ -270,10 +279,14 @@ int game_loop(void) {
 			send_state(buf); // send new state to players
 		}
 		if (game->event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+		{
+			game->interrupted = 1;
 			return -1;
+		}
 		draw_footer(); // draw footer
 		al_flip_display(); // update window
 	}
+	game->interrupted = 1;
 	return -1;
 }
 
@@ -293,24 +306,24 @@ void clean_exit(int exit_code)
 
 void signal_handler(int signum)
 {
-	cout << "Interrupt signal (" << signum << ")" << endl;
+	std::cout << "Interrupt signal (" << signum << ")" << endl;
 	game->interrupted = signum;
 }
 
 int main(int argc, char **argv)
 {
-	cout.rdbuf()->pubsetbuf(0, 0);
+	std::cout.rdbuf()->pubsetbuf(0, 0);
 	signal(SIGINT, signal_handler);
 	signal(SIGABRT, signal_handler);
 	signal(SIGTERM, signal_handler);
-
-	setup_players();
 
 	al_init();
 	al_init_primitives_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
 	al_init_acodec_addon();
+
+	setup_players();
 
 	al_install_audio();
 	al_install_keyboard();
@@ -331,10 +344,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	
+	game->footer_rows = game->players.size() & 0x3 ? game->players.size() / 4 + 1: game->players.size() / 4;
+	std::cout << "NUMBER OF ROWS = " << game->footer_rows << endl;
 
 	al_set_new_display_flags(ALLEGRO_WINDOWED);
-	game->okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE);
+	game->okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
 	al_set_window_title(game->okno, "The Game");
 	game->queue = al_create_event_queue();
 	game->timer = al_create_timer(1.0 / FPS);

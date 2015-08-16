@@ -15,6 +15,7 @@ struct game_t
 
 	USHORT port;
 	int interrupted;
+	int footer_rows;
 	sqlite3 * db;
 
 	vector < player_t > players;

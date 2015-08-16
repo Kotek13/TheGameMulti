@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <ctime>
 #include <cinttypes>
 #include <sqlite3.h>
@@ -29,7 +30,7 @@ typedef struct player player_t;
 
 #include "bullet.h"
 #include "player.h"
-
+#include "server.h"
 #include "game.h"
 
 #define BLOCK_SIZE 15
