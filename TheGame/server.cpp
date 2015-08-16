@@ -26,13 +26,6 @@ using namespace std;
 
 TG_SOCKET server_socket = INVALID_SOCKET;
 
-size_t crc32(size_t hash, char * string, size_t len)
-{
-	for (char * i = string; len; len--, i++)
-		hash = (hash >> 8) ^ (poly[((hash & 0xff) ^ *i) & 0xff]);
-	return hash;
-}
-
 void socket_init()
 {
 #ifdef WIN32
@@ -47,7 +40,7 @@ void socket_init()
 #endif
 }
 
-void setup_server(TG_SOCKET& server_socket, unsigned short port)
+void setup_server(unsigned short port)
 {
 	socket_init();
 	int res = 0;
@@ -78,36 +71,36 @@ void setup_server(TG_SOCKET& server_socket, unsigned short port)
 	server_socket = tmp_socket;
 }
 
-vi find(size_t hash)
+vector<player_t>::iterator find(size_t hash)
 {
-	for (vi i = players.begin(); i < players.end(); i++)
+	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
 	{
 		if (i->login_hash == hash)
 			return i;
 	}
-	return players.end();
+	return game->players.end();
 }
 
-vi find_by_ip(struct sockaddr_in & p)
+vector<player_t>::iterator find_by_ip(struct sockaddr_in & p)
 {
-	for (vi i = players.begin(); i < players.end(); i++)
+	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
 	{
 		if (!memcmp(i->dane, &p, sizeof sockaddr_in))
 			return i;
 	}
-	return players.end();
+	return game->players.end();
 }
 
 void sendall(char * buf, size_t len)
 {
-	for (vi i = players.begin(); i < players.end(); i++)
+	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
 	{
 		if (i->connected)
 		{
 			if (sendto(server_socket, buf, len, 0, (struct sockaddr*)i->dane, sizeof sockaddr_in) == SOCKET_ERROR)
 			{
 				//printf("sendto() failed with error code : %d\n", WSAGetLastError());
-				printf("[-] %s disconnected\n", logins[distance(players.begin(), i)]);
+				printf("[-] %s disconnected\n", i->login);
 				i->connected = false;
 			}
 		}
@@ -120,27 +113,33 @@ struct client_msg
 	char choices;
 };
 
-void run_server(thread_params * params) {
+void run_server(void) {
 	int res = 0;
+
 	struct client_msg * msg;
 	struct sockaddr_in client;
 	char buf[10];
 	size_t len = 0;
+
 	int cl_len = sizeof client;
+
 	ZeroMemory(&client, sizeof client);
-	setup_server(server_socket, params->port);
+
+	setup_server(game->port);
+
 	printf("server started.\n\nLet's play!\n\n");
-	while (1)
+	
+	while (!game->interrupted)
 	{
 		ZeroMemory(buf, 10);
 		if ((len = recvfrom(server_socket, buf, 5, 0, (struct sockaddr*)&client, &cl_len)) == SOCKET_ERROR)
 		{
-			vi pl = find_by_ip(client);
+			vector<player_t>::iterator pl = find_by_ip(client);
 
-			if (pl != players.end())
+			if (pl != game->players.end())
 			{
 				if (pl->connected == true)
-					printf("[-] %s disconnected\n", logins[distance(players.begin(), pl)]);
+					printf("[-] %s disconnected\n", pl->login);
 				pl->connected = false;
 			}
 				
@@ -151,17 +150,18 @@ void run_server(thread_params * params) {
 		
 		msg = (struct client_msg*)(buf);
 		
-		vi pl = find(msg->login_hash);
+		vector<player_t>::iterator pl = find(msg->login_hash);
 
-		if (pl != players.end())
+		if (pl != game->players.end())
 		{
 			memcpy(pl->dane, &client, sizeof(struct sockaddr_in));
 			pl->state->choices = (unsigned char)msg->choices;
 			if (pl->connected == false)
-				printf("[+] %s connected!\n", logins[distance(players.begin(), pl)]);
+				printf("[+] %s connected!\n", pl->login);
 			pl->connected = true;
 		}
 	}
+	
 	closesocket(server_socket);
 	WSACleanup();
 	return;

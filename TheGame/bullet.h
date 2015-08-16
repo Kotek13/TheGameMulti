@@ -2,7 +2,6 @@
 #define _BULLET_H
 
 #include "stdafx.h"
-#include "player.h"
 
 using namespace std;
 
@@ -14,7 +13,7 @@ struct bullet
 	size_t owner_id;
 	ALLEGRO_COLOR player_color;
 
-	bullet(player * Player);
+	bullet(player_t * Player);
 	bullet() {}
 
 	void move();

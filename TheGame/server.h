@@ -1,11 +1,9 @@
-typedef vector <player>::iterator vi;
-vi find(size_t hash);
+#ifndef _SERVER_H
+#define _SERVER_H
+
+vector<player_t>::iterator find(size_t hash);
 
 void sendall(char * buf, size_t len);
-size_t crc32(size_t hash, char * string, size_t len);
-extern SOCKET server_socket;
-extern size_t * poly;
-extern char ** logins;
 
 struct server_msg
 {
@@ -16,9 +14,6 @@ struct server_msg
 	short flags;
 };
 
-struct thread_params
-{
-	unsigned short port;
-};
+void run_server(void);
 
-void run_server(thread_params * params);
+#endif

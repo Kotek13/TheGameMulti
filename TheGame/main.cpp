@@ -4,78 +4,78 @@
 
 #ifdef WIN32
 #include <Windows.h>
+typedef HANDLE HTHREAD;
 #else
+typedef pthread HTHREAD;
 #define ZeroMemory((buf),(nb)) memset((buf), 0, (nb))
 #include <pthread>
 #endif
 
+game_t * game = new game_t;
+
 using namespace std;
-
-ALLEGRO_KEYBOARD_STATE klawiatura;
-ALLEGRO_DISPLAY * okno;
-ALLEGRO_FONT * font, *foot_font, *menu_font;
-ALLEGRO_TIMER * timer;
-ALLEGRO_EVENT_QUEUE * queue;
-ALLEGRO_EVENT event;
-ALLEGRO_SAMPLE *theme, *shoot;
-size_t * poly = new size_t[256];
-
-vector < player > players;
-list < bullet > bullets;
-char ** logins;
 
 void Message(const char * a)
 {
 	MessageBox(NULL, a, "Error", MB_OK);
 }
 
-void StartThread(void(*function)(thread_params*), unsigned short port)
+HTHREAD StartThread(void(*function)(void))
 {
-	thread_params * params = new thread_params[1];
-	params->port = port;
 #ifdef WIN32
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)function, params, 0, NULL);
+	return CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)function, game, 0, NULL);
 #else
 	pthread thread;
-	pthread_create(&thread, 0, function, params);
+	pthread_create(&thread, 0, function, game);
+	return;
+#endif
+}
+
+void WaitForThread(HTHREAD thread)
+{
+#ifdef WIN32
+	WaitForSingleObject(thread, INFINITE);
+#else
+	pthread_join(thread, NULL);
 #endif
 }
 
 void check_collisions()
 {
-	for (size_t i = 0; i < players.size(); i++)
+	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
 	{
-		for (size_t j = i + 1; j < players.size(); j++)
+		for (vector<player_t>::iterator j = i + 1; j < game->players.end(); j++)
 		{
-			if (players[i].collision(players[j]))
+			if (i->collision(*j))
 			{
-				float v_x_1 = players[i].v_x;
-				float v_x_2 = players[j].v_x;
-				float v_y_1 = players[i].v_y;
-				float v_y_2 = players[j].v_y;
+				float v_x_1 = i->v_x;
+				float v_x_2 = j->v_x;
+				float v_y_1 = i->v_y;
+				float v_y_2 = j->v_y;
 				
-				players[i].v_x = v_x_2;
-				players[i].v_y = v_y_2;
-				players[j].v_x = v_x_1;
-				players[j].v_y = v_y_1;
+				i->v_x = v_x_2;
+				i->v_y = v_y_2;
+				j->v_x = v_x_1;
+				j->v_y = v_y_1;
 
-				players[i].step();
-				players[j].step();
+				i->step();
+				j->step();
 			}
 		}
 	}
 }
 void check_hits()
 {
-	for (auto i = players.begin(); i != players.end(); i++)
+
+	for (auto i = game->players.begin(); i != game->players.end(); i++)
 	{
-		for (auto j = bullets.begin(); j != bullets.end(); j++)
+		for (auto j = game->bullets.begin(); j != game->bullets.end(); j++)
 		{
 
 			if (i->is_in(j->x, j->y) && j->alive && i->alive)
 			{
-				vi owner = find(j->owner_id);
-				if (owner == players.end())
+				vector<player_t>::iterator owner = find(j->owner_id);
+				if (owner == game->players.end())
 					return;
 				bool same = false;
 				if(i->login_hash == j->owner_id)
@@ -88,62 +88,84 @@ void check_hits()
 					i->alive = false;
 				}
 					
-				bullets.erase(j);
+				game->bullets.erase(j);
 			}
 		}
 	}
 }
 void draw_footer()
 {
-	for (size_t i = 0; i < players.size(); i++)
-	{
+	vector<player_t>::iterator beg = game->players.begin();
+	size_t size = game->players.size();
 
-		if (players[i].alive)
+	for (vector<player_t>::iterator i = beg; i < game->players.end(); i++)
+	{
+		int dist = i - beg;
+		if (i->alive)
 		{
-			al_draw_filled_rectangle(MAP_SIZE / players.size() * i, MAP_SIZE + 2, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() * players[i].hp / HP, MAP_SIZE + FOOTER_SIZE, players[i].color);
+			al_draw_filled_rectangle(MAP_SIZE / size * dist, MAP_SIZE + 2, MAP_SIZE / size * dist + MAP_SIZE / game->players.size() * i->hp / HP, MAP_SIZE + FOOTER_SIZE, i->color);
 		}
 		char * buffer = new char[100];
-		sprintf_s(buffer, 100, "[%c] %s [%d]", (players[i].connected) ? '+' : '-', logins[i], players[i].points);
-		al_draw_line(MAP_SIZE / players.size() * i, MAP_SIZE + 1, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() * players[i].ammo / MAX_AMMO, MAP_SIZE + 1, al_map_rgb(255, 255, 255), 2);
-		al_draw_text(foot_font, COLOR_WHITE, MAP_SIZE / players.size() * i + MAP_SIZE / players.size() / 2, MAP_SIZE + 1, ALLEGRO_ALIGN_CENTER, buffer);
+		sprintf_s(buffer, 100, "[%c] %s [%d]", i->connected ? '+' : '-', i->login, i->points);
+		al_draw_line(MAP_SIZE / size * dist, MAP_SIZE + 1, MAP_SIZE / size * dist + MAP_SIZE / size * i->ammo / MAX_AMMO, MAP_SIZE + 1, al_map_rgb(255, 255, 255), 2);
+		al_draw_text(game->foot_font, COLOR_WHITE, MAP_SIZE / size * dist + MAP_SIZE / size / 2, MAP_SIZE + 1, ALLEGRO_ALIGN_CENTER, buffer);
 
 		delete[] buffer;
 	}
 }
-void setup_players()
+
+static int query_players_cb(void *data, int argc, char **argv, char **azColName)
+{
+	string key, value;
+
+	for (int i = 0; i < argc; i++)
+	{
+		key = string(azColName[i]);
+		value = string(argv[i]);
+
+		if (key == "ID")
+			cout << "ID=" << stoi(value);
+		else if (key == "LOGIN")
+			cout << "LOGIN=" << value << endl;
+		else if (key == "COLOR")
+			cout << "COLOR=(" << stoi(value.substr(0, 2), NULL, 16) << "," << stoi(value.substr(2, 2), NULL, 16) << "," << stoi(value.substr(4, 2), NULL, 16) << ")" << endl;
+		else
+			cout << "WTF?" << endl;
+	}
+
+	return 0;
+}
+
+int setup_players()
 {	
-	printf("Reading config file...\n");
+	char * err_msg = 0;
+
+	cout << "Connecting to database TheGame.db ...";
+
 	srand(time(NULL));
-	players.clear();
-	bullets.clear();
-	FILE * fd = fopen("poly.bin", "rb");
-	fread((void*)poly, 1, 1024, fd);
-	fclose(fd);
-
-	if (!(fd = fopen("players.cfg", "r")))
-		exit(EXIT_FAILURE);
-	size_t n = 0;
-	while (!feof(fd))
-	{
-		char ch = fgetc(fd);
-		if (ch == '\n')
-			n++;
-	}
-	rewind(fd);
-	logins = new char*[n];
-
-	for (size_t i = 0; i < n; i++)
-	{
-		logins[i] = new char[11];
-		ZeroMemory(*(logins + i), 11);
-	}
-		
 	
-	char buffer[100];
-	char * login = new char[12];
-	ZeroMemory(login, 12);
-	ZeroMemory(buffer, 100);
-	size_t it = 0;
+	game->players.clear();
+	game->bullets.clear();
+
+	if (sqlite3_open("TheGame.db", &game->db))
+	{
+		cout << "failure: " << sqlite3_errmsg(game->db) << endl;
+		return -1;
+	}
+	else
+		cout << "success" << endl;;	
+
+	sqlite3 * db = game->db;
+
+	if (sqlite3_exec(db, "SELECT * from USERS", query_players_cb,NULL, &err_msg) != SQLITE_OK)
+	{
+		cout << "SQL error: " << err_msg << endl;
+		sqlite3_free(err_msg);
+	}
+	else
+		cout << "Finished reading players" << endl;
+	
+	/*
 	while (fgets(buffer,100, fd) != NULL)
 	{
 		char * p = strchr(buffer, '#');
@@ -158,98 +180,132 @@ void setup_players()
 
 		printf("[%d] %s PIN: %08x {R: %d G: %d B: %d}\n",it, logins[it++], login_hash, r, g, b);
 
-		players.push_back(player());
-		players[players.size() - 1].color = al_map_rgb(r & 0xff, g & 0xff, b & 0xff);
-		players[players.size() - 1].login_hash = login_hash;
+		game->players.push_back(player());
+		game->players[game->players.size() - 1].color = al_map_rgb(r & 0xff, g & 0xff, b & 0xff);
+		game->players[game->players.size() - 1].login_hash = login_hash;
 		bool test;
 		do
 		{
 			test = false;
-			players[players.size() - 1].x = (float)rand() / ((float)RAND_MAX / MAP_SIZE);
-			players[players.size() - 1].y = (float)rand() / ((float)RAND_MAX / (MAP_SIZE-BLOCK_SIZE));
+			game->players.back().x = (float)rand() / ((float)RAND_MAX / MAP_SIZE);
+			game->players.back().y = (float)rand() / ((float)RAND_MAX / (MAP_SIZE-BLOCK_SIZE));
 
-			for (size_t i = 0; i < players.size() - 1; i++)
-				test = test || players[players.size()-1].collision(players[i]);
+			for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end() - 1; i++)
+				test = test || i->collision(*j);
 
 		} while (test);
 		ZeroMemory(buffer, 100);
 	}
 	printf("Done!\n");
+	*/
 }
 void send_state(char * buf)
 {
-	const unsigned char n = (unsigned char)players.size();
+	const unsigned char n = (unsigned char)game->players.size();
 	struct server_msg * msg = new server_msg[1];
+
 	ZeroMemory(msg, sizeof server_msg);
 	ZeroMemory(buf, 4096);
+	
 	char * p = buf;
 	size_t len = sizeof(server_msg)*n + 1;
+
 	if (len > 4096)
 	{
 		fprintf(stderr, "Buffer too large!");
 		exit(EXIT_FAILURE);
 	}
+
 	*p++ = n;
-	for (unsigned char i = 0; i < n; i++)
+
+	for (vector<player_t>::iterator i = game->players.begin() ; i < game->players.end(); i++)
 	{
-		msg->x = (short)players[i].x;
-		msg->y = (short)players[i].y;
-		msg->alpha = (float)players[i].gun_alpha;
-		msg->hp = (short)players[i].hp;
+		msg->x = (short)i->x;
+		msg->y = (short)i->y;
+		msg->alpha = (float)i->gun_alpha;
+		msg->hp = (short)i->hp;
 		msg->flags = 0;
-		msg->flags |= (short)players[i].alive;
-		msg->flags |= ((short)players[i].shot << 1);
-		msg->flags |= ((short)(players[i].ammo == MAX_AMMO) << 2);
+		msg->flags |= (short)i->alive;
+		msg->flags |= ((short)i->shot << 1);
+		msg->flags |= ((short)(i->ammo == MAX_AMMO) << 2);
 		memcpy(p, msg, sizeof server_msg);
 		p += sizeof(server_msg);
 	}
 	sendall(buf, len);
 	delete[] msg;
 }
-int game(void) {
+int game_loop(void) {
 
-	setup_players();
 	char * buf = new char[4096];
-	while (!al_key_down(&klawiatura, ALLEGRO_KEY_ESCAPE))
+
+	while (!al_key_down(&game->klawiatura, ALLEGRO_KEY_ESCAPE) && !game->interrupted)
 	{
-		al_wait_for_event(queue, &event);
-		if (event.type == ALLEGRO_EVENT_TIMER)
+		al_wait_for_event(game->queue, &game->event);
+		if (game->event.type == ALLEGRO_EVENT_TIMER)
 		{
-			al_get_keyboard_state(&klawiatura);
+			al_get_keyboard_state(&game->klawiatura);
 			al_clear_to_color(al_map_rgb(0, 0, 0));
 			
-			for (auto i = players.begin(); i < players.end(); i++) // First players move
+			for (auto i = game->players.begin(); i < game->players.end(); i++) // First players move
 				i->move();
 			
-			for (auto j = bullets.begin(); j != bullets.end(); j++) // Then bullets
+			for (auto j = game->bullets.begin(); j != game->bullets.end(); j++) // Then bullets
 			{
 				j->move();
 				if (!j->alive)
-					bullets.erase(j);
+					game->bullets.erase(j);
 			}
 
-			for (auto i = players.begin(); i < players.end(); i++) // Then players shoot 
-				i->shoot(bullets, shoot);
+			for (auto i = game->players.begin(); i < game->players.end(); i++) // Then players shoot 
+				i->shoot(&game->bullets, game->shoot);
 
 			check_collisions(); // check collision
 			check_hits(); // and check hits
 
-			for (auto i = players.begin(); i != players.end(); i++) // draw everything
+			for (auto i = game->players.begin(); i != game->players.end(); i++) // draw everything
 				i->draw();
-			for (auto i = bullets.begin(); i != bullets.end(); i++)
+			for (auto i = game->bullets.begin(); i != game->bullets.end(); i++)
 				i->draw();
 
 			send_state(buf); // send new state to players
 		}
-		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+		if (game->event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			return -1;
 		draw_footer(); // draw footer
 		al_flip_display(); // update window
 	}
 	return -1;
 }
+
+void clean_exit(int exit_code)
+{
+	game->bullets.clear();
+	game->players.clear();
+
+	al_destroy_timer(game->timer);
+	al_destroy_display(game->okno);
+	al_destroy_sample(game->theme);
+	al_destroy_sample(game->shoot);
+
+	if (game->db)
+		sqlite3_close(game->db);
+}
+
+void signal_handler(int signum)
+{
+	cout << "Interrupt signal (" << signum << ")" << endl;
+	game->interrupted = signum;
+}
+
 int main(int argc, char **argv)
 {
+	cout.rdbuf()->pubsetbuf(0, 0);
+	signal(SIGINT, signal_handler);
+	signal(SIGABRT, signal_handler);
+	signal(SIGTERM, signal_handler);
+
+	setup_players();
+
 	al_init();
 	al_init_primitives_addon();
 	al_init_font_addon();
@@ -259,41 +315,41 @@ int main(int argc, char **argv)
 	al_install_audio();
 	al_install_keyboard();
 	al_reserve_samples(2);
-	if (!(theme = al_load_sample("hydrogen.ogg")) || !(shoot = al_load_sample("shoot.ogg")))
+
+	if (!(game->theme = al_load_sample("hydrogen.ogg")) || !(game->shoot = al_load_sample("shoot.ogg")))
 	{
 		Message("Cannot load sample!");
 	}
 
-	font = al_load_font("Times.ttf", 72, 0);
-	menu_font = al_load_font("Times.ttf", 36, 0);
-	foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
+	game->font = al_load_font("Times.ttf", 72, 0);
+	game->menu_font = al_load_font("Times.ttf", 36, 0);
+	game->foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
 
-	if (!font || !foot_font)
+	if (!game->font || !game->foot_font)
 	{
 		Message("Cannot load font!");
 		return 1;
 	}
 
+	
+
 	al_set_new_display_flags(ALLEGRO_WINDOWED);
-	okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE);
-	al_set_window_title(okno, "The Game");
-	queue = al_create_event_queue();
-	timer = al_create_timer(1.0 / FPS);
+	game->okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE);
+	al_set_window_title(game->okno, "The Game");
+	game->queue = al_create_event_queue();
+	game->timer = al_create_timer(1.0 / FPS);
 
 	//al_hide_mouse_cursor(okno);
-	al_start_timer(timer);
-	al_register_event_source(queue, al_get_display_event_source(okno));
-	al_register_event_source(queue, al_get_timer_event_source(timer));
+	al_start_timer(game->timer);
+	al_register_event_source(game->queue, al_get_display_event_source(game->okno));
+	al_register_event_source(game->queue, al_get_timer_event_source(game->timer));
 	//al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
-	unsigned short port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
-	StartThread(run_server, port);
-	game();
+	game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
 
-	bullets.clear();
-	players.clear();
-	al_destroy_timer(timer);
-	al_destroy_display(okno);
-	al_destroy_sample(theme);
-	al_destroy_sample(shoot);
+	HTHREAD thread = StartThread(run_server);
+	game_loop();
+
+	WaitForThread(thread);
+	clean_exit(0);
 	return 0;
 }

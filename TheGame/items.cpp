@@ -20,7 +20,7 @@ void bullet::draw()
 		al_draw_filled_rectangle(this->x, this->y, this->x + BULLET_SIZE, this->y + BULLET_SIZE, this->player_color);
 }
 
-bullet::bullet(player * Player)
+bullet::bullet(player_t * Player)
 {
 	this->alive = true;
 	this->player_color = Player->color;
@@ -37,6 +37,7 @@ bool states::get(choice c)
 	size_t val = static_cast<size_t>(c);
 	return ((choices >> c) & 1) == 1;
 };
+
 player::player()
 {
 	this->login_hash = 0;
@@ -44,8 +45,10 @@ player::player()
 	this->state = new struct states[1];
 	this->dane = new struct sockaddr_in[1];
 	this->color = al_map_rgb(255, 0, 0);
+
 	ZeroMemory(this->dane, sizeof(struct sockaddr_in));
 	spawn();
+
 	this->x = 0;
 	this->points = 0;
 	this->y = 0;
@@ -155,15 +158,15 @@ void player::draw()
 			spawn();
 	}
 }
-bool player::collision(player &P)
+bool player::collision(player_t &P)
 {
 	return this->is_in(P.x, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y + BLOCK_SIZE) || this->is_in(P.x, P.y + BLOCK_SIZE);
 }
-void player::shoot(list < bullet > &bullets, ALLEGRO_SAMPLE * shoot)
+void player::shoot(list < bullet_t > *bullets, ALLEGRO_SAMPLE * shoot)
 {
 	if (this->shots_left > 0 && this->ammo > 0)
 	{
-			bullets.push_back(bullet(this));
+			bullets->push_back(bullet(this));
 			this->ammo--;
 			this->shots_left--;
 			this->shot = true;

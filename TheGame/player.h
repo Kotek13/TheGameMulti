@@ -2,7 +2,6 @@
 #define _PLAYER_H
 
 #include "stdafx.h"
-#include "bullet.h"
 
 using namespace std;
 
@@ -23,6 +22,9 @@ struct player
 	float gun_alpha;
 	int ammo;
 	int hp;
+
+	int id;
+
 	size_t shots_left;
 	size_t points;
 	size_t respawn;
@@ -34,16 +36,18 @@ struct player
 	bool connected;
 	bool alive;	
 	bool shot;
+
+	string login;
 	
 	player();
-	bool collision(player &P);
+	bool collision(player_t &P);
 	bool is_in(float X, float Y);
 	void draw();
 	void spawn();
 	void change_state();
 	void step();
 	void move();
-	void shoot(list < bullet > &bullets, ALLEGRO_SAMPLE * shoot);
+	void shoot(list < bullet_t > *bullets, ALLEGRO_SAMPLE * shoot);
 };
-extern vector < player > players;
+
 #endif

@@ -1,3 +1,6 @@
+#ifndef _STDAFX_H
+#define _STDAFX_H
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
@@ -7,12 +10,27 @@
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
+
+#include <csignal>
 #include <vector>
 #include <list>
-#include <cstdio>
+
+#include <fstream>
+#include <iostream>
+#include <string>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
+#include <cinttypes>
+#include <sqlite3.h>
+
+typedef struct bullet bullet_t;
+typedef struct player player_t;
+
+#include "bullet.h"
+#include "player.h"
+
+#include "game.h"
 
 #define BLOCK_SIZE 15
 #define MAP_SIZE 700
@@ -30,3 +48,7 @@
 #define HP 200
 #define COLOR_WHITE al_map_rgb(255, 255, 255)
 #define COLOR_BLACK al_map_rgb(0, 0, 0)
+
+uint32_t crc32(uint32_t crc, const void *buf, size_t size);
+
+#endif
