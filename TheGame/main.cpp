@@ -140,6 +140,9 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 			b = (unsigned char)stoi(value.substr(4, 2), NULL, 16) & 0xff;
 			player.color = al_map_rgb(r, g, b);
 		}
+		else if (key == "POINTS")
+			player.points = stoi(value);
+
 		else
 			std::cout << "WTF?" << endl;
 	}
@@ -149,6 +152,7 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 	std::cout << endl << "ID=" << player.id << endl;
 	std::cout << "LOGIN=" << player.login << endl;
 	std::cout << "COLOR=(" << player.color.r * 255 << "," << player.color.g * 255 << "," << player.color.b * 255 << ")" << endl;
+	std::cout << "POINTS=" << player.points << endl;
 	printf("HASH=%#.08x\n", player.login_hash);
 
 	bool test = false;
@@ -201,6 +205,7 @@ int setup_players()
 		std::cout << "Finished reading players" << endl;
 	
 }
+
 void send_state(char * buf)
 {
 	const unsigned char n = (unsigned char)game->players.size();
@@ -233,6 +238,7 @@ void send_state(char * buf)
 		memcpy(p, msg, sizeof server_msg);
 		p += sizeof(server_msg);
 	}
+	
 	sendall(buf, len);
 	delete[] msg;
 }
@@ -287,8 +293,60 @@ void game_loop(void) {
 	game->interrupted = 1;
 }
 
+static int save_points_cb(void *data, int argc, char **argv, char **azColName)
+{
+	string key, value;
+	int id, points;
+	string login;
+
+	for (int i = 0; i < argc; i++)
+	{
+		key = string(azColName[i]);
+		value = string(argv[i]);
+
+		if (key == "ID")
+			id = stoi(value);
+		else if (key == "LOGIN")
+			login = value;
+		else if (key == "POINTS")
+			points = stoi(value);
+		else
+			std::cout << "WTF?" << endl;
+	}
+
+	printf("[%d] %-20s finished with %-10d points\n", id, login.c_str(), points);
+	return 0;
+}
+
+void save_points()
+{
+	char * sql_format = "UPDATE USERS set POINTS = %d where (ID = %d and POINTS < %d); " \
+		"SELECT ID,LOGIN,POINTS FROM USERS where ID = %d";
+	
+	char sql[sizeof(sql_format) * 2];
+
+	char * zErrMsg = NULL;
+	std::cout << "Saving points for players" << endl;
+
+	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
+	{
+		ZeroMemory(sql, sizeof(sql));
+		sprintf(sql, sql_format, i->points, i->id, i->points, i->id);
+
+		if (sqlite3_exec(game->db, sql, save_points_cb, NULL, &zErrMsg ) != SQLITE_OK)
+		{
+			printf("SQL error: %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+		}
+	}
+	std::cout << "Finished saving points" << endl << endl;
+	
+}
+
 void clean_exit(int exit_code)
 {
+	save_points();
+
 	game->bullets.clear();
 	game->players.clear();
 
@@ -334,6 +392,7 @@ int main(int argc, char **argv)
 	game->font = al_load_font("Times.ttf", 72, 0);
 	game->menu_font = al_load_font("Times.ttf", 36, 0);
 	game->foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
+	game->interrupted = 0;
 
 	if (!game->font || !game->foot_font)
 	{
@@ -342,7 +401,6 @@ int main(int argc, char **argv)
 	}
 
 	game->footer_rows = game->players.size() & 0x3 ? game->players.size() / 4 + 1: game->players.size() / 4;
-	std::cout << "NUMBER OF ROWS = " << game->footer_rows << endl;
 
 	al_set_new_display_flags(ALLEGRO_WINDOWED);
 	game->okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
