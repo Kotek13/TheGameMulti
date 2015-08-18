@@ -149,11 +149,7 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 
 	player.login_hash = crc32(0, player.login.c_str(), player.login.length());
 
-	std::cout << endl << "ID=" << player.id << endl;
-	std::cout << "LOGIN=" << player.login << endl;
-	std::cout << "COLOR=(" << player.color.r * 255 << "," << player.color.g * 255 << "," << player.color.b * 255 << ")" << endl;
-	std::cout << "POINTS=" << player.points << endl;
-	printf("HASH=%#.08x\n", player.login_hash);
+	printf("[%d] %-20s (%08x) has %-10d points\n", player.id, player.login.c_str(), player.login_hash, player.points);
 
 	bool test = false;
 
@@ -195,6 +191,8 @@ int setup_players()
 		std::cout << "success" << endl;;	
 
 	sqlite3 * db = game->db;
+
+	std::cout << "Starting reading players" << endl;
 
 	if (sqlite3_exec(db, "SELECT * from USERS", query_players_cb,NULL, &err_msg) != SQLITE_OK)
 	{
