@@ -5,8 +5,8 @@
 
 struct game_t
 {
-	ALLEGRO_KEYBOARD_STATE klawiatura;
-	ALLEGRO_DISPLAY * okno;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	ALLEGRO_DISPLAY * window;
 	ALLEGRO_FONT * font, *foot_font, *menu_font;
 	ALLEGRO_TIMER * timer;
 	ALLEGRO_EVENT_QUEUE * queue;

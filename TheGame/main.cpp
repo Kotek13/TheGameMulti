@@ -202,8 +202,51 @@ int setup_players()
 		sqlite3_free(err_msg);
 	}
 	else
-		std::cout << "Finished reading players" << endl;
+		std::cout << "Finished reading players" << endl << endl;
 	
+	return 0;
+}
+
+void setup_window()
+{
+	al_init_primitives_addon();
+	al_init_font_addon();
+	al_init_ttf_addon();
+	al_init_acodec_addon();
+	al_install_audio();
+	al_install_keyboard();
+	al_reserve_samples(2);
+
+	if (!(game->theme = al_load_sample("hydrogen.ogg")) || !(game->shoot = al_load_sample("shoot.ogg")))
+	{
+		Message("Cannot load sample!");
+	}
+
+	game->font = al_load_font("Times.ttf", 72, 0);
+	game->menu_font = al_load_font("Times.ttf", 36, 0);
+	game->foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
+
+	if (!game->font || !game->foot_font)
+	{
+		Message("Cannot load font!");
+	}
+
+	game->footer_rows = game->players.size() & 0x3 ? game->players.size() / 4 + 1 : game->players.size() / 4;
+
+	al_set_new_display_flags(ALLEGRO_WINDOWED);
+
+	game->window = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
+
+	al_set_window_title(game->window, "The Game");
+
+	game->queue = al_create_event_queue();
+	game->timer = al_create_timer(1.0 / FPS);
+
+	//al_hide_mouse_cursor(window);
+	al_start_timer(game->timer);
+	al_register_event_source(game->queue, al_get_display_event_source(game->window));
+	al_register_event_source(game->queue, al_get_timer_event_source(game->timer));
+	//al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 }
 
 void send_state(char * buf)
@@ -245,13 +288,13 @@ void send_state(char * buf)
 void game_loop(void) {
 
 	char * buf = new char[4096];
-	while (!al_key_down(&game->klawiatura, ALLEGRO_KEY_ESCAPE) && !game->interrupted)
+	while (!al_key_down(&game->keyboard, ALLEGRO_KEY_ESCAPE) && !game->interrupted)
 	{
 		al_wait_for_event(game->queue, &game->event);
 		if (game->event.type == ALLEGRO_EVENT_TIMER)
 		{
 
-			al_get_keyboard_state(&game->klawiatura);
+			al_get_keyboard_state(&game->keyboard);
 			al_clear_to_color(al_map_rgb(0, 0, 0));
 			
 			for (auto i = game->players.begin(); i < game->players.end(); i++) // First players move
@@ -286,6 +329,7 @@ void game_loop(void) {
 		if (game->event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 		{
 			game->interrupted = 1;
+			return;
 		}
 		draw_footer(); // draw footer
 		al_flip_display(); // update window
@@ -320,27 +364,26 @@ static int save_points_cb(void *data, int argc, char **argv, char **azColName)
 
 void save_points()
 {
-	char * sql_format = "UPDATE USERS set POINTS = %d where (ID = %d and POINTS < %d); " \
-		"SELECT ID,LOGIN,POINTS FROM USERS where ID = %d";
-	
-	char sql[sizeof(sql_format) * 2];
+
+	char sql[2000];
 
 	char * zErrMsg = NULL;
-	std::cout << "Saving points for players" << endl;
+	std::cout << endl << "Saving points for players" << endl;
 
 	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
 	{
 		ZeroMemory(sql, sizeof(sql));
-		sprintf(sql, sql_format, i->points, i->id, i->points, i->id);
 
+		sprintf(sql, "UPDATE USERS set POINTS = %d where (ID = %d and POINTS < %d); SELECT ID,LOGIN,POINTS FROM USERS where ID = %d", i->points, i->id, i->points, i->id);
+		
 		if (sqlite3_exec(game->db, sql, save_points_cb, NULL, &zErrMsg ) != SQLITE_OK)
 		{
 			printf("SQL error: %s\n", zErrMsg);
 			sqlite3_free(zErrMsg);
 		}
 	}
-	std::cout << "Finished saving points" << endl << endl;
-	
+
+	printf("Finished saving points\n");
 }
 
 void clean_exit(int exit_code)
@@ -350,10 +393,17 @@ void clean_exit(int exit_code)
 	game->bullets.clear();
 	game->players.clear();
 
-	al_destroy_timer(game->timer);
-	al_destroy_display(game->okno);
-	al_destroy_sample(game->theme);
-	al_destroy_sample(game->shoot);
+	if (game->timer)
+		al_destroy_timer(game->timer);
+	
+	if (game->window)
+		al_destroy_display(game->window);
+
+	if (game->theme)
+		al_destroy_sample(game->theme);
+
+	if (game->theme)
+		al_destroy_sample(game->shoot);
 
 	if (game->db)
 		sqlite3_close(game->db);
@@ -372,47 +422,13 @@ int main(int argc, char **argv)
 	signal(SIGABRT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	al_init();
-	al_init_primitives_addon();
-	al_init_font_addon();
-	al_init_ttf_addon();
-	al_init_acodec_addon();
-
-	setup_players();
-
-	al_install_audio();
-	al_install_keyboard();
-	al_reserve_samples(2);
-
-	if (!(game->theme = al_load_sample("hydrogen.ogg")) || !(game->shoot = al_load_sample("shoot.ogg")))
-	{
-		Message("Cannot load sample!");
-	}
-
-	game->font = al_load_font("Times.ttf", 72, 0);
-	game->menu_font = al_load_font("Times.ttf", 36, 0);
-	game->foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
 	game->interrupted = 0;
 
-	if (!game->font || !game->foot_font)
-	{
-		Message("Cannot load font!");
-		return 1;
-	}
+	al_init();
 
-	game->footer_rows = game->players.size() & 0x3 ? game->players.size() / 4 + 1: game->players.size() / 4;
+	setup_players();
+	setup_window();
 
-	al_set_new_display_flags(ALLEGRO_WINDOWED);
-	game->okno = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
-	al_set_window_title(game->okno, "The Game");
-	game->queue = al_create_event_queue();
-	game->timer = al_create_timer(1.0 / FPS);
-
-	//al_hide_mouse_cursor(okno);
-	al_start_timer(game->timer);
-	al_register_event_source(game->queue, al_get_display_event_source(game->okno));
-	al_register_event_source(game->queue, al_get_timer_event_source(game->timer));
-	//al_play_sample(theme, 0.7, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 	game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
 
 	HTHREAD thread = StartThread(run_server);
