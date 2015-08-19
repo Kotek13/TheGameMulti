@@ -1,9 +1,9 @@
 __author__ = 'Kalmar'
 
-IP = "127.0.0.1"
-PORT = 8081
-PIN = 0x318f0682
-MY_NR = 1
+IP = ???
+PORT = 8080
+PIN = ???
+MY_NR = ???
 HP = 200
 DEBUG = False
 THICKNESS = 2

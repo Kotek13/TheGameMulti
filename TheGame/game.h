@@ -17,6 +17,9 @@ struct game_t
 	int interrupted;
 	int footer_rows;
 	sqlite3 * db;
+	unsigned int counter;
+
+	TG_SOCKET points_server;
 
 	vector < player_t > players;
 	list < bullet_t > bullets;
@@ -24,5 +27,10 @@ struct game_t
 };
 
 extern game_t * game;
+
+void game_loop(void);
+int setup_players();
+void setup_window();
+int connect_point_server();
 
 #endif

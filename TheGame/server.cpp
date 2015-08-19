@@ -15,34 +15,12 @@
 #include "bullet.h"
 #include "server.h"
 
-#ifdef WIN32
-typedef SOCKET TG_SOCKET;
-#else
-typedef int TG_SOCKET;
-#define INVALID_SOCKET -1;
-#endif
-
 using namespace std;
 
 TG_SOCKET server_socket = INVALID_SOCKET;
 
-void socket_init()
-{
-#ifdef WIN32
-	WSADATA wsaData;
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0)
-	{
-		printf("WSAStartup failed: %d\n", iResult);
-		exit(-1);
-	}
-#else
-#endif
-}
-
 void setup_server(unsigned short port)
 {
-	socket_init();
 	int res = 0;
 	TG_SOCKET tmp_socket;
 
@@ -100,6 +78,20 @@ vector<player_t>::iterator find_by_ip(struct sockaddr_in & p)
 	return game->players.end();
 }
 
+void socket_init()
+{
+#ifdef WIN32
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0)
+	{
+		printf("WSAStartup failed: %d\n", iResult);
+		exit(-1);
+	}
+#else
+#endif
+}
+
 void sendall(char * buf, size_t len)
 {
 	for (vector<player_t>::iterator i = game->players.begin(); i < game->players.end(); i++)
@@ -136,7 +128,7 @@ void run_server(void) {
 
 	setup_server(game->port);
 
-	std::cout << "Server started with SOCKET " << server_socket << endl;;
+	std::cout << "Server started with SOCKET " << server_socket << endl << endl;
 	
 	while (!game->interrupted)
 	{
@@ -173,9 +165,8 @@ void run_server(void) {
 			}
 		//}
 	}
-	
 	closesocket(server_socket);
 	WSACleanup();
 	std::cout << "Server closed" << endl;
-	ExitThread(0);
+	return;
 }

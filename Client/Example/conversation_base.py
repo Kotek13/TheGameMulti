@@ -8,35 +8,8 @@ import settings
 
 DEBUG_SERVER = False
 
-class Bullet(object):
-    x = 0
-    y = 0
-    v_x = 0
-    v_y = 0
-    alive = None
-    owner_nr = None
-
-    def __init__(self, player):
-        self.owner_nr = player.player_nr
-        self.x = player.x + 1.0 * settings.BLOCK_SIZE / 2 + cos(player.angle) * settings.BLOCK_SIZE / 2 * settings.GUN_SIZE - 1
-        self.y = player.y + 1.0 * settings.BLOCK_SIZE / 2 - sin(player.angle) * settings.BLOCK_SIZE / 2 * settings.GUN_SIZE - 1
-        self.v_x = settings.BULLET_SPEED * cos(player.angle)
-        self.v_y = 0 - settings.BULLET_SPEED * sin(player.angle)
-        self.alive = True
-
-    def move(self):
-        self.x += self.v_x
-        self.y += self.v_y
-
-
 class Player(object):
     x = None
-    v_x = None
-    v_y = None
-    old_x = 0
-    old_y = 0
-    old_vx = 0
-    old_vy = 0
     y = None
     angle = None
     hp = settings.HP
@@ -46,23 +19,9 @@ class Player(object):
     shot = False
     full = True
     player_nr = None
-    counter = 0
-
-    def shoot(self):
-        self.full = False
-        self.ammo -= 1
-        return Bullet(self)
-
-    def hit(self, bullet):
-        if not self.alive:
-            return False
-        return (bullet.x >= self.x) and (bullet.x <= (self.x + settings.BLOCK_SIZE)) and (bullet.y >= self.y) and (bullet.y <= self.y + settings.BLOCK_SIZE)
 
 
 class Conversation(object):
-    sock = None
-    frames_missed_in_row = 0
-    pin = None
     command_set = dict(MOVE_RIGHT=0, MOVE_LEFT=1, MOVE_UP=2, MOVE_DOWN=3, ROT_RIGHT=4, ROT_LEFT=5, SHOOT=6)
     flags = dict(ALIVE=0, SHOT=1, FULL=2)
 
@@ -72,27 +31,19 @@ class Conversation(object):
         self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         self.sock.connect((settings.IP, settings.PORT))
         self.sock.settimeout(1.0 / settings.FPS * 2)
+        self.frames_missed_in_row = 0
 
     def get_flags(self, flag_name, byte):
         return ((byte >> self.flags[flag_name]) & 1) == 1
 
-    def parse_server(self, buf, old_players):
+    def parse_server(self, buf):
         n = ord(buf[0])
-        preserve = False
-        if old_players:
-            if len(old_players) == n:
-                preserve = True
 
         players = []
         for i in xrange(n):
             tmp = buf[(1+12*i):(1+12*(i+1))]
             pl = Player()
-            if preserve:
-                pl = old_players[i]
-                pl.old_x = pl.x
-                pl.old_y = pl.y
-                pl.old_vx = pl.v_x
-                pl.old_vy = pl.v_y
+            
             pl.player_nr = i
             pl.x = unpack("H", tmp[:2])[0]
             pl.y = unpack("H", tmp[2:4])[0]
@@ -124,11 +75,11 @@ class Conversation(object):
         com = self.parse_command(commands)
         return self.prepare_buf(com)
 
-    def get_players(self, old_players=None):
+    def get_players(self):
         try:
             buf = self.sock.recv(4096)
             self.frames_missed_in_row = 0
-            return self.parse_server(buf, old_players)
+            return self.parse_server(buf)
         except timeout:
             self.frames_missed_in_row += 1
             if self.frames_missed_in_row > 3.0 / self.sock.gettimeout():

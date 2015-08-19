@@ -35,9 +35,9 @@ typedef struct player player_t;
 
 #define BLOCK_SIZE 15
 #define MAP_SIZE 700
-#define FPS 60
-#define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/FPS*2)
-#define BLOCK_MAX_SPEED ((float)MAP_SIZE/FPS)
+#define FPS 15
+#define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/70*2)
+#define BLOCK_MAX_SPEED ((float)MAP_SIZE/70)
 #define BULLET_SIZE 2
 #define GUN_SIZE 1.9
 #define FOOTER_SIZE 20
@@ -49,6 +49,15 @@ typedef struct player player_t;
 #define HP 200
 #define COLOR_WHITE al_map_rgb(255, 255, 255)
 #define COLOR_BLACK al_map_rgb(0, 0, 0)
+
+#ifdef WIN32
+#include <Windows.h>
+typedef HANDLE HTHREAD;
+#else
+typedef pthread HTHREAD;
+#define ZeroMemory((buf),(nb)) memset((buf), 0, (nb))
+#include <pthread>
+#endif
 
 uint32_t crc32(uint32_t crc, const void *buf, size_t size);
 
