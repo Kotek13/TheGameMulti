@@ -238,6 +238,7 @@ void setup_window()
 	game->window = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
 
 	al_set_window_title(game->window, "The Game");
+	al_set_window_position(game->window, -100, 3);
 
 	game->queue = al_create_event_queue();
 	game->timer = al_create_timer(1.0 / FPS);
