@@ -35,7 +35,7 @@ typedef struct player player_t;
 
 #define BLOCK_SIZE 15
 #define MAP_SIZE 700
-#define FPS 30
+#define FPS 60
 #define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/70*2)
 #define BLOCK_MAX_SPEED ((float)MAP_SIZE/70)
 #define BULLET_SIZE 2
