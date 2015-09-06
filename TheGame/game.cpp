@@ -71,16 +71,16 @@ void draw_footer()
 
 		// hp bar
 		if (i->alive)
-			al_draw_filled_rectangle(MAP_SIZE / 4 * col, MAP_SIZE + 2 + row * FOOTER_SIZE, MAP_SIZE / 4 * col + MAP_SIZE / 4 * i->hp / HP, MAP_SIZE + FOOTER_SIZE * (row + 1), i->color);
+			al_draw_filled_rectangle(game->settings.map_size / 4 * col, game->settings.map_size + 2 + row * game->settings.footer_size, game->settings.map_size / 4 * col + game->settings.map_size / 4 * i->hp / game->settings.hp, game->settings.map_size + game->settings.footer_size * (row + 1), i->color);
 
 		// ammo bar
-		al_draw_line(MAP_SIZE / 4 * col, MAP_SIZE + 1 + FOOTER_SIZE * row, MAP_SIZE / 4 * col + MAP_SIZE / 4 * i->ammo / MAX_AMMO, MAP_SIZE + 1 + FOOTER_SIZE * row, al_map_rgb(255, 255, 255), 2);
+		al_draw_line(game->settings.map_size / 4 * col, game->settings.map_size + 1 + game->settings.footer_size * row, game->settings.map_size / 4 * col + game->settings.map_size / 4 * i->ammo / game->settings.max_ammo, game->settings.map_size + 1 + game->settings.footer_size * row, al_map_rgb(255, 255, 255), 2);
 
 		// login
 		char * buffer = new char[100];
 		sprintf_s(buffer, 100, "[%c] %s [%d]", i->connected ? '+' : '-', i->login.c_str(), i->points);
 
-		al_draw_text(game->foot_font, COLOR_WHITE, MAP_SIZE / 4 * col + MAP_SIZE / 4 / 2, MAP_SIZE + 1 + FOOTER_SIZE * row, ALLEGRO_ALIGN_CENTER, buffer);
+		al_draw_text(game->foot_font, COLOR_WHITE, game->settings.map_size / 4 * col + game->settings.map_size / 4 / 2, game->settings.map_size + 1 + game->settings.footer_size * row, ALLEGRO_ALIGN_CENTER, buffer);
 
 		delete[] buffer;
 	}
@@ -124,8 +124,8 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 
 	do
 	{
-		player.x = (float)rand() / ((float)RAND_MAX / MAP_SIZE);
-		player.y = (float)rand() / ((float)RAND_MAX / (MAP_SIZE - BLOCK_SIZE));
+		player.x = (float)rand() / ((float)RAND_MAX / game->settings.map_size);
+		player.y = (float)rand() / ((float)RAND_MAX / (game->settings.map_size - game->settings.block_size));
 
 		if (game->players.size())
 		{
@@ -224,7 +224,7 @@ void setup_window()
 
 	game->font = al_load_font("Times.ttf", 72, 0);
 	game->menu_font = al_load_font("Times.ttf", 36, 0);
-	game->foot_font = al_load_font("Times.ttf", FOOTER_SIZE - 4, 0);
+	game->foot_font = al_load_font("Times.ttf", game->settings.footer_size - 4, 0);
 
 	if (!game->font || !game->foot_font)
 	{
@@ -235,13 +235,13 @@ void setup_window()
 
 	al_set_new_display_flags(ALLEGRO_WINDOWED);
 
-	game->window = al_create_display(MAP_SIZE, MAP_SIZE + FOOTER_SIZE * game->footer_rows);
+	game->window = al_create_display(game->settings.map_size, game->settings.map_size + game->settings.footer_size * game->footer_rows);
 
 	al_set_window_title(game->window, "The Game");
 	al_set_window_position(game->window, -100, 3);
 
 	game->queue = al_create_event_queue();
-	game->timer = al_create_timer(1.0 / FPS);
+	game->timer = al_create_timer(1.0 / game->settings.fps);
 
 	//al_hide_mouse_cursor(window);
 	al_start_timer(game->timer);
@@ -278,7 +278,7 @@ void send_state(char * buf)
 		msg->flags = 0;
 		msg->flags |= (short)i->alive;
 		msg->flags |= ((short)i->shot << 1);
-		msg->flags |= ((short)(i->ammo == MAX_AMMO) << 2);
+		msg->flags |= ((short)(i->ammo == game->settings.max_ammo) << 2);
 		memcpy(p, msg, sizeof server_msg);
 		p += sizeof(server_msg);
 	}
@@ -377,7 +377,7 @@ void game_loop(void) {
 				i->draw();
 
 			send_state(buf); // send new state to players
-			if (game->counter++ > 5 * FPS)
+			if (game->counter++ > 5 * game->settings.fps)
 			{
 				//send_points();
 				save_points_quiet();

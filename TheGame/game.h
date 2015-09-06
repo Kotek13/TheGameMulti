@@ -2,6 +2,7 @@
 #define _GAME_H
 
 #include "stdafx.h"
+#include "settings.h"
 
 struct game_t
 {
@@ -23,6 +24,8 @@ struct game_t
 
 	vector < player_t > players;
 	list < bullet_t > bullets;
+
+	settings_t settings;
 
 };
 

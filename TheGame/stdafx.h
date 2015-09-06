@@ -32,21 +32,8 @@ typedef struct player player_t;
 #include "player.h"
 #include "server.h"
 #include "game.h"
+#include "settings.h"
 
-#define BLOCK_SIZE 15
-#define MAP_SIZE 700
-#define FPS 60
-#define BLOCK_ACCELERATION ((float)BLOCK_MAX_SPEED/70*2)
-#define BLOCK_MAX_SPEED ((float)MAP_SIZE/70)
-#define BULLET_SIZE 2
-#define GUN_SIZE 1.9
-#define FOOTER_SIZE 20
-#define BULLET_SPEED (1.5*BLOCK_MAX_SPEED)
-#define THICKNESS 2
-#define RESPAWN_TIME 2
-#define GUN_RESOLUTION ((float)BLOCK_SIZE/MAP_SIZE*2)
-#define MAX_AMMO 200
-#define HP 200
 #define COLOR_WHITE al_map_rgb(255, 255, 255)
 #define COLOR_BLACK al_map_rgb(0, 0, 0)
 
