@@ -24,6 +24,7 @@
 #include <ctime>
 #include <cinttypes>
 #include <sqlite3.h>
+#include <pugixml.hpp>
 
 typedef struct bullet bullet_t;
 typedef struct player player_t;
