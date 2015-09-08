@@ -14,7 +14,6 @@ struct settings_t
 	float gun_size = 1.9;
 	float footer_size = 20;
 	float bullet_speed = (1.5*block_max_speed);
-	float thickness = 2;
 	float respawn_time = 2;
 	float gun_resolution = ((float)block_size/map_size*2);
 	int max_ammo = 200;
