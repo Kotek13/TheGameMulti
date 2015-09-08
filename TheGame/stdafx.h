@@ -30,9 +30,9 @@ typedef struct player player_t;
 
 #include "bullet.h"
 #include "player.h"
+#include "settings.h"
 #include "server.h"
 #include "game.h"
-#include "settings.h"
 
 #define COLOR_WHITE al_map_rgb(255, 255, 255)
 #define COLOR_BLACK al_map_rgb(0, 0, 0)

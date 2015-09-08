@@ -2,7 +2,6 @@
 #define _GAME_H
 
 #include "stdafx.h"
-#include "settings.h"
 
 struct game_t
 {
