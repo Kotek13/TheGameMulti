@@ -61,7 +61,7 @@ void save_points()
 	{
 		ZeroMemory(sql, sizeof(sql));
 
-		sprintf(sql, "UPDATE USERS set POINTS = %d where (ID = %d and POINTS < %d); SELECT ID,LOGIN,POINTS FROM USERS where ID = %d", i->points, i->id, i->points, i->id);
+		sprintf(sql, ("UPDATE " + game->settings.table_name + " set POINTS = %d where (ID = %d and POINTS < %d); SELECT ID,LOGIN,POINTS FROM " + game->settings.table_name + " where ID = %d").c_str(), i->points, i->id, i->points, i->id);
 		
 		if (sqlite3_exec(game->db, sql, save_points_cb, NULL, &zErrMsg ) != SQLITE_OK)
 		{
@@ -112,17 +112,14 @@ int main(int argc, char **argv)
 
 	game->interrupted = 0;
 
-	//if (connect_point_server())
-		//return 0;
-
 	al_init();
 
 	game->settings.load_xml("settings.xml");
 	socket_init();
 	setup_players();
 	setup_window();
-
-	game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
+	game->port = game->settings.port;
+	//game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
 
 	HTHREAD thread = StartThread(run_server);
 	game_loop();

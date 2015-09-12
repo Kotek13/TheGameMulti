@@ -164,7 +164,7 @@ int setup_players()
 	std::cout << "Starting reading players" << endl;
 	sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
 
-	if (sqlite3_exec(db, "SELECT * from USERS", query_players_cb, NULL, &err_msg) != SQLITE_OK)
+	if (sqlite3_exec(db, ("SELECT * from " + game->settings.table_name).c_str(), query_players_cb, NULL, &err_msg) != SQLITE_OK)
 	{
 		std::cout << "SQL error: " << err_msg << endl;
 		sqlite3_free(err_msg);
@@ -327,7 +327,7 @@ void save_points_quiet()
 	{
 		ZeroMemory(sql, sizeof(sql));
 
-		sprintf(sql, "UPDATE USERS set POINTS = %d where (ID = %d and POINTS < %d)", i->points, i->id, i->points);
+		sprintf(sql, ("UPDATE " + game->settings.table_name + " set POINTS = %d where (ID = %d and POINTS < %d)").c_str(), i->points, i->id, i->points);
 
 		if (sqlite3_exec(game->db, sql, NULL, NULL, &zErrMsg) != SQLITE_OK)
 		{

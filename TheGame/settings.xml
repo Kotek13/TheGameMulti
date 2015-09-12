@@ -14,5 +14,6 @@
      gun_resolution="0.0428571428"
      max_ammo="200"
      hp="200"
+	 port="8080"
     />
 </TheGame>

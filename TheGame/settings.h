@@ -19,6 +19,7 @@ struct settings_t
 	float gun_resolution = ((float)block_size/map_size*2);
 	int max_ammo = 200;
 	int hp = 200;
+	int port = 8080;
 
 	bool load_xml(char * file);
 };

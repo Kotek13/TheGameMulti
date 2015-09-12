@@ -2,14 +2,13 @@
 
 bool settings_t::load_xml(char * file)
 {
-	std::cout << "Loading XML from:" << file << std::endl;
+	std::cout << "Loading XML from:" << file;
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(file);
 
 	if (!result)
 	{
-		//std::cout << "----------!!!!ERROR!!!!----------\n";
-		std::cout << "Error occured while parsing \""<< file <<"\"\n";
+		std::cout << "\nError occured while parsing \""<< file <<"\"\n";
 		std::cout << "Error description: " << result.description() << "\n";
 		std::cout << "Error offset: " << result.offset << " (error at [..." << (file + result.offset) << "]\n"; 
 		std::cout << "Using default values instead\n\n";
@@ -42,6 +41,7 @@ bool settings_t::load_xml(char * file)
 			else if (name == "gun_resolution")		settings.gun_resolution = stof(attr->value()), gun_resolution_set = true;
 			else if (name == "max_ammo")			settings.max_ammo = stoi(attr->value());
 			else if (name == "hp")					settings.hp = stoi(attr->value());
+			else if (name == "port")				settings.port = stoi(attr->value());
 			else
 			{
 				std::cout << "Unresolved atibute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
@@ -61,7 +61,7 @@ bool settings_t::load_xml(char * file)
 			settings.gun_resolution = (float)settings.block_size / settings.map_size * 2.f;
 		game->settings = settings;
 	}
-	std::cout << "Done loading XML" << std::endl;
+	std::cout << " ...success" << std::endl;
 	return true;
 }
 
