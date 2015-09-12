@@ -5,6 +5,7 @@
 
 struct settings_t
 {
+	string table_name = "USERS";
 	int block_size = 15;
 	int map_size = 700;
 	int fps = 60;
@@ -18,6 +19,8 @@ struct settings_t
 	float gun_resolution = ((float)block_size/map_size*2);
 	int max_ammo = 200;
 	int hp = 200;
+
+	bool load_xml(char * file);
 };
 
 #endif

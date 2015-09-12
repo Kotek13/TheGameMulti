@@ -117,6 +117,7 @@ int main(int argc, char **argv)
 
 	al_init();
 
+	game->settings.load_xml("settings.xml");
 	socket_init();
 	setup_players();
 	setup_window();
