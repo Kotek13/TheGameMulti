@@ -1,8 +1,5 @@
 #include "stdafx.h"
 
-void print_settings(settings_t settings);
-
-
 bool settings_t::load_xml(char * file)
 {
 	std::cout << "Loading XML from:" << file << std::endl;
@@ -62,30 +59,9 @@ bool settings_t::load_xml(char * file)
 			settings.bullet_speed = (float)1.5f * settings.block_max_speed;
 		if (!gun_resolution_set)
 			settings.gun_resolution = (float)settings.block_size / settings.map_size * 2.f;
-		//print_settings(settings);
 		game->settings = settings;
 	}
 	std::cout << "Done loading XML" << std::endl;
 	return true;
-}
-
-void print_settings(settings_t settings)
-{
-	std::cout << "Settings:\n\t" <<
-		"table_name: " << settings.table_name << "\n\t" <<
-		"block_size: " << settings.block_size << "\n\t" <<
-		"map_size: " << settings.map_size << "\n\t" <<
-		"fps: " << settings.fps << "\n\t" <<
-		"block_max_speed: " << settings.block_max_speed << "\n\t" <<
-		"block_acceleration: " << settings.block_acceleration << "\n\t" <<
-		"bullet_size: " << settings.bullet_size << "\n\t" <<
-		"gun_size: " << settings.gun_size << "\n\t" <<
-		"footer_size: " << settings.footer_size << "\n\t" <<
-		"bullet_speed: " << settings.bullet_speed << "\n\t" <<
-		"respawn_time: " << settings.respawn_time << "\n\t" <<
-		"gun_resolution: " << settings.gun_resolution << "\n\t" <<
-		"max_ammo: " << settings.max_ammo << "\n\t" <<
-		"hp: " << settings.hp << "\n";
-
 }
 
