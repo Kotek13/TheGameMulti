@@ -61,7 +61,7 @@ void save_points()
 	{
 		ZeroMemory(sql, sizeof(sql));
 
-		sprintf(sql, ("UPDATE " + game->settings.table_name + " set POINTS = %d where (ID = %d and POINTS < %d); SELECT ID,LOGIN,POINTS FROM " + game->settings.table_name + " where ID = %d").c_str(), i->points, i->id, i->points, i->id);
+		sprintf(sql, "UPDATE %s set POINTS = %d where (ID = %d and POINTS < %d); SELECT ID,LOGIN,POINTS FROM %s where ID = %d", game->settings.table_name, i->points, i->id, i->points, game->settings.table_name, i->id);
 		
 		if (sqlite3_exec(game->db, sql, save_points_cb, NULL, &zErrMsg ) != SQLITE_OK)
 		{

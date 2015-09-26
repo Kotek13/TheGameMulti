@@ -140,6 +140,41 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 	return 0;
 }
 
+static int create_table_cb(void *data, int argc, char **argv, char **azColName)
+{
+	int i;
+	for (i = 0; i<argc; i++) {
+		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+	}
+	printf("\n");
+	return 0;
+}
+
+bool create_table()
+{
+	char sql[2000];
+
+	char * zErrMsg = NULL;
+
+	ZeroMemory(sql, sizeof(sql));
+
+	sprintf(sql, "CREATE TABLE %s (ID INT PRIMARY KEY, LOGIN TEXT, COLOR TEXT, POINTS LONG);", game->settings.table_name.c_str());
+
+	std::cout << "command: " << string(sql) << std::endl;
+
+	if (sqlite3_exec(game->db, sql, create_table_cb, NULL, &zErrMsg) != SQLITE_OK)
+	{
+		printf("SQL error %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		return false;
+	}
+	else
+	{
+		//adding default player (ID: 0, NAME: "PLayer0", COLOR: "00FF00", POINTS: 0) 
+	}
+	return true;
+}
+
 int setup_players()
 {
 	char * err_msg = 0;
@@ -168,6 +203,19 @@ int setup_players()
 	{
 		std::cout << "SQL error: " << err_msg << endl;
 		sqlite3_free(err_msg);
+		std::string msg_tmp = err_msg;
+		if (msg_tmp.compare(0,12,"no such table"))
+		{
+			std::cout << "Trying to create table: " << game->settings.table_name << std::endl;
+			if (create_table())
+			{
+				std::cout << "Sucessfully created table: " << game->settings.table_name << " with a single player, edit database data and restart server\n";
+			}
+			else
+			{
+				std::cout << "Failed to create table\n";
+			}
+		}
 	}
 	else
 		std::cout << "Finished reading players" << endl << endl;
@@ -327,7 +375,7 @@ void save_points_quiet()
 	{
 		ZeroMemory(sql, sizeof(sql));
 
-		sprintf(sql, ("UPDATE " + game->settings.table_name + " set POINTS = %d where (ID = %d and POINTS < %d)").c_str(), i->points, i->id, i->points);
+		sprintf(sql, "UPDATE %s set POINTS = %d where (ID = %d and POINTS < %d)", game->settings.table_name, i->points, i->id, i->points);
 
 		if (sqlite3_exec(game->db, sql, NULL, NULL, &zErrMsg) != SQLITE_OK)
 		{
@@ -397,3 +445,4 @@ void game_loop(void) {
 	}
 	game->interrupted = 1;
 }
+
