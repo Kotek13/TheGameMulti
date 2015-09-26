@@ -5,7 +5,6 @@
 
 struct settings_t
 {
-	string table_name = "USERS";
 	int block_size = 15;
 	int map_size = 700;
 	int fps = 60;

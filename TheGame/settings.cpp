@@ -27,8 +27,7 @@ bool settings_t::load_xml(char * file)
 		for (pugi::xml_attribute_iterator attr = game_node.attributes_begin(); attr != game_node.attributes_end(); attr++)
 		{
 			string name = attr->name();
-			if		(name == "table_name")			settings.table_name = attr->value(), table_name_set=true;
-			else if (name == "block_size")			settings.block_size = stoi(attr->value());
+			if (name == "block_size")			settings.block_size = stoi(attr->value());
 			else if (name == "map_size")			settings.map_size = stoi(attr->value());
 			else if (name == "fps")					settings.fps = stoi(attr->value());
 			else if (name == "block_max_speed")		settings.block_max_speed = stof(attr->value()), block_max_speed_set = true;
