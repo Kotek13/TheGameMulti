@@ -42,7 +42,7 @@ bool settings_t::load_xml(char * file)
 			else if (name == "port")				settings.port = stoi(attr->value());
 			else
 			{
-				std::cout << "\nUnresolved atibute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
+				std::cout << "\nUnresolved attribute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
 			}
 		}
 		if (!block_max_speed_set)
