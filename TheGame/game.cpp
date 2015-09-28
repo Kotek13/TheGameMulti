@@ -140,16 +140,6 @@ static int query_players_cb(void *data, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-static int create_table_cb(void *data, int argc, char **argv, char **azColName)
-{
-	int i;
-	for (i = 0; i<argc; i++) {
-		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-	}
-	printf("\n");
-	return 0;
-}
-
 bool create_table()
 {
 	char sql[2000];
@@ -160,9 +150,7 @@ bool create_table()
 
 	sprintf(sql, "CREATE TABLE %s (ID INT PRIMARY KEY, LOGIN TEXT, COLOR TEXT, POINTS LONG);", game->settings.table_name.c_str());
 
-	std::cout << "command: " << string(sql) << std::endl;
-
-	if (sqlite3_exec(game->db, sql, create_table_cb, NULL, &zErrMsg) != SQLITE_OK)
+	if (sqlite3_exec(game->db, sql, NULL, NULL, &zErrMsg) != SQLITE_OK)
 	{
 		printf("SQL error %s\n", zErrMsg);
 		sqlite3_free(zErrMsg);
@@ -171,6 +159,14 @@ bool create_table()
 	else
 	{
 		//adding default player (ID: 0, NAME: "PLayer0", COLOR: "00FF00", POINTS: 0) 
+		sprintf(sql, "INSERT INTO %s VALUES (0,'Player_0','00AAFF',0); INSERT INTO %s VALUES (1,'Player_1','FF0044',0);",game->settings.table_name.c_str(), game->settings.table_name.c_str());
+		if (sqlite3_exec(game->db, sql, NULL, NULL, &zErrMsg) != SQLITE_OK)
+		{
+			printf("SQL error %s\n", zErrMsg);
+			sqlite3_free(zErrMsg);
+			printf("Created new table %s but failed to add default users\n",game->settings.table_name.c_str());
+			return false;
+		}
 	}
 	return true;
 }
@@ -375,7 +371,7 @@ void save_points_quiet()
 	{
 		ZeroMemory(sql, sizeof(sql));
 
-		sprintf(sql, "UPDATE %s set POINTS = %d where (ID = %d and POINTS < %d)", game->settings.table_name, i->points, i->id, i->points);
+		sprintf(sql, "UPDATE %s set POINTS = %d where (ID = %d and POINTS < %d)", game->settings.table_name.c_str(), i->points, i->id, i->points);
 
 		if (sqlite3_exec(game->db, sql, NULL, NULL, &zErrMsg) != SQLITE_OK)
 		{
