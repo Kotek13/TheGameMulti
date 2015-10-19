@@ -1,0 +1,19 @@
+<TheGame>
+   <game 
+     table_name="USERS"
+     block_size="15" 
+     map_size="700"
+     fps="60"
+     block_max_speed="10"
+     block_acceleration="0.2857142857"
+     bullet_size="2"
+     gun_size="1.9"
+     footer_size="20"
+     bullet_speed="15"
+     respawn_time="2"
+     gun_resolution="0.0428571428"
+     max_ammo="200"
+     hp="200"
+	 port="8080"
+    />
+</TheGame>

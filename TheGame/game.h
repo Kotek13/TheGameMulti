@@ -24,6 +24,8 @@ struct game_t
 	vector < player_t > players;
 	list < bullet_t > bullets;
 
+	settings_t settings;
+
 };
 
 extern game_t * game;
