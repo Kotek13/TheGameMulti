@@ -112,16 +112,14 @@ int main(int argc, char **argv)
 
 	game->interrupted = 0;
 
-	//if (connect_point_server())
-		//return 0;
-
 	al_init();
 
+	game->settings.load_xml("settings.xml");
 	socket_init();
 	setup_players();
 	setup_window();
-
-	game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
+	game->port = game->settings.port;
+	//game->port = argc > 1 ? (unsigned short)atoi(argv[1]) : 8080;
 
 	HTHREAD thread = StartThread(run_server);
 	game_loop();

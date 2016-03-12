@@ -8,16 +8,16 @@ void bullet::move()
 	this->x = this->x + this->v_x;
 	this->y = this->y + this->v_y;
 
-	if (this->x >= MAP_SIZE - BULLET_SIZE || this->x <= 0)
+	if (this->x >= game->settings.map_size - game->settings.bullet_size || this->x <= 0)
 		this->alive = false;
-	if (this->y >= MAP_SIZE - BULLET_SIZE || this->y <= 0)
+	if (this->y >= game->settings.map_size - game->settings.bullet_size || this->y <= 0)
 		this->alive = false;
 }
 
 void bullet::draw()
 {
 	if (this->alive)
-		al_draw_filled_rectangle(this->x, this->y, this->x + BULLET_SIZE, this->y + BULLET_SIZE, this->player_color);
+		al_draw_filled_rectangle(this->x, this->y, this->x + game->settings.bullet_size, this->y + game->settings.bullet_size, this->player_color);
 }
 
 bullet::bullet(player_t * Player)
@@ -25,10 +25,10 @@ bullet::bullet(player_t * Player)
 	this->alive = true;
 	this->player_color = Player->color;
 	this->owner_id = Player->login_hash;
-	this->x = Player->x + BLOCK_SIZE / 2 + cos(Player->gun_alpha) * (BLOCK_SIZE / 2) * GUN_SIZE -1;
-	this->y = Player->y + BLOCK_SIZE / 2 - sin(Player->gun_alpha) * (BLOCK_SIZE / 2) * GUN_SIZE -1;
-	this->v_x = BULLET_SPEED * cos(Player->gun_alpha);
-	this->v_y = -BULLET_SPEED * sin(Player->gun_alpha);
+	this->x = Player->x + game->settings.block_size / 2 + cos(Player->gun_alpha) * (game->settings.block_size / 2) * game->settings.gun_size -1;
+	this->y = Player->y + game->settings.block_size / 2 - sin(Player->gun_alpha) * (game->settings.block_size / 2) * game->settings.gun_size -1;
+	this->v_x = game->settings.bullet_speed * cos(Player->gun_alpha);
+	this->v_y = -game->settings.bullet_speed * sin(Player->gun_alpha);
 }
 
 // PLAYER
@@ -62,7 +62,7 @@ void player::change_state()
 		if (++this->counter > 1)
 		{
 			this->counter = 0;
-			this->ammo += (ammo >= MAX_AMMO) ? 0 : 1;
+			this->ammo += (ammo >= game->settings.max_ammo) ? 0 : 1;
 		}
 	}	
 	else {
@@ -75,22 +75,22 @@ void player::change_state()
 	float v1 = this->v_x * this->v_x + this->v_y * this->v_y;
 
 	if (this->state->get(ROT_LEFT))
-		this->gun_alpha = this->gun_alpha + GUN_RESOLUTION;
+		this->gun_alpha = this->gun_alpha + game->settings.gun_resolution;
 	
 	if (this->state->get(ROT_RIGHT))
-		this->gun_alpha = (this->gun_alpha - GUN_RESOLUTION);
+		this->gun_alpha = (this->gun_alpha - game->settings.gun_resolution);
 
 	if (this->state->get(MOVE_LEFT))
-		this->v_x = this->v_x - BLOCK_ACCELERATION;
+		this->v_x = this->v_x - game->settings.block_acceleration;
 	
 	if (this->state->get(MOVE_RIGHT))
-		this->v_x = this->v_x + BLOCK_ACCELERATION;
+		this->v_x = this->v_x + game->settings.block_acceleration;
 	
 	if (this->state->get(MOVE_UP))
-		this->v_y = this->v_y - BLOCK_ACCELERATION;
+		this->v_y = this->v_y - game->settings.block_acceleration;
 
 	if (this->state->get(MOVE_DOWN))
-		this->v_y = this->v_y + BLOCK_ACCELERATION;
+		this->v_y = this->v_y + game->settings.block_acceleration;
 
 	if (this->gun_alpha > 3.1415926 * 2)
 		this->gun_alpha -= 3.1415926 * 2;
@@ -98,7 +98,7 @@ void player::change_state()
 		this->gun_alpha += (3.1415926 * 2);
 
 	float v2 = this->v_x * this->v_x + this->v_y * this->v_y;
-	if (v2 > BLOCK_MAX_SPEED * BLOCK_MAX_SPEED)
+	if (v2 > game->settings.block_max_speed * game->settings.block_max_speed)
 	{
 		this->v_x = sqrt(v1 / v2) * this->v_x;
 		this->v_y = sqrt(v1 / v2) * this->v_y;
@@ -107,14 +107,14 @@ void player::change_state()
 }
 void player::step()
 {
-	if (this->x + this->v_x > MAP_SIZE - BLOCK_SIZE)
+	if (this->x + this->v_x > game->settings.map_size - game->settings.block_size)
 		this->x = 0; // this->v_x = -this->v_x; //
 	if (this->x + this->v_x < 0)
-		this->x = MAP_SIZE - BLOCK_SIZE; // this->v_x = -this->v_x; //
-	if (this->y + this->v_y > MAP_SIZE - BLOCK_SIZE)
+		this->x = game->settings.map_size - game->settings.block_size; // this->v_x = -this->v_x; //
+	if (this->y + this->v_y > game->settings.map_size - game->settings.block_size)
 		this->y = 0; // this->v_y = -this->v_y; //
 	if (this->y + this->v_y < 0)
-		this->y = MAP_SIZE - BLOCK_SIZE; //this->v_y = -this->v_y; // 
+		this->y = game->settings.map_size - game->settings.block_size; //this->v_y = -this->v_y; // 
 
 	this->x = this->x + this->v_x;
 	this->y = this->y + this->v_y;
@@ -130,7 +130,7 @@ void player::move()
 }
 bool player::is_in(float X, float Y)
 {
-	return (X >= this->x) && (X <= (this->x + BLOCK_SIZE)) && (Y >= this->y) && (Y <= (this->y + BLOCK_SIZE));
+	return (X >= this->x) && (X <= (this->x + game->settings.block_size)) && (Y >= this->y) && (Y <= (this->y + game->settings.block_size));
 }
 void player::spawn()
 {
@@ -139,8 +139,8 @@ void player::spawn()
 	this->shots_left = 0;
 	this->v_x = 0;
 	this->v_y = 0;
-	this->ammo = MAX_AMMO;
-	this->hp = HP;
+	this->ammo = game->settings.max_ammo;
+	this->hp = game->settings.hp;
 	this->state->choices = 0;
 	this->gun_alpha = 0;
 	this->shot = false;
@@ -149,18 +149,18 @@ void player::draw()
 {
 	if (this->alive)
 	{
-		al_draw_filled_rectangle(this->x, this->y, this->x + BLOCK_SIZE, this->y + BLOCK_SIZE, this->color);
-		al_draw_line(this->x + BLOCK_SIZE / 2, this->y + BLOCK_SIZE / 2, this->x + BLOCK_SIZE / 2 + cos(this->gun_alpha) * (BLOCK_SIZE / 2) * GUN_SIZE, this->y + BLOCK_SIZE / 2 - sin(this->gun_alpha) * (BLOCK_SIZE / 2) * GUN_SIZE, al_map_rgb(255, 255, 255), 2);
+		al_draw_filled_rectangle(this->x, this->y, this->x + game->settings.block_size, this->y + game->settings.block_size, this->color);
+		al_draw_line(this->x + game->settings.block_size / 2, this->y + game->settings.block_size / 2, this->x + game->settings.block_size / 2 + cos(this->gun_alpha) * (game->settings.block_size / 2) * game->settings.gun_size, this->y + game->settings.block_size / 2 - sin(this->gun_alpha) * (game->settings.block_size / 2) * game->settings.gun_size, al_map_rgb(255, 255, 255), 2);
 	}
 	else
 	{
-		if (++this->respawn > RESPAWN_TIME * FPS)
+		if (++this->respawn > game->settings.respawn_time * game->settings.fps)
 			spawn();
 	}
 }
 bool player::collision(player_t &P)
 {
-	return this->is_in(P.x, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y) || this->is_in(P.x + BLOCK_SIZE, P.y + BLOCK_SIZE) || this->is_in(P.x, P.y + BLOCK_SIZE);
+	return this->is_in(P.x, P.y) || this->is_in(P.x + game->settings.block_size, P.y) || this->is_in(P.x + game->settings.block_size, P.y + game->settings.block_size) || this->is_in(P.x, P.y + game->settings.block_size);
 }
 void player::shoot(list < bullet_t > *bullets, ALLEGRO_SAMPLE * shoot)
 {
