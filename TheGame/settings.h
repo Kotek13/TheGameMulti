@@ -5,7 +5,6 @@
 
 struct settings_t
 {
-	string table_name = "USERS";
 	int block_size = 15;
 	int map_size = 700;
 	int fps = 60;
@@ -20,6 +19,7 @@ struct settings_t
 	int max_ammo = 200;
 	int hp = 200;
 	int port = 8080;
+	string table_name = "USERS";
 
 	bool load_xml(char * file);
 };

@@ -17,8 +17,7 @@ bool settings_t::load_xml(char * file)
 	pugi::xml_node TheGame_node = doc.child("TheGame");
 	for (pugi::xml_node game_node = TheGame_node.first_child(); game_node; game_node = game_node.next_sibling())
 	{
-		bool table_name_set = false,
-			block_max_speed_set=false,
+		bool block_max_speed_set=false,
 			block_acceleration_set = false,
 			bullet_speed_set=false,
 			gun_resolution_set = false;
@@ -27,8 +26,7 @@ bool settings_t::load_xml(char * file)
 		for (pugi::xml_attribute_iterator attr = game_node.attributes_begin(); attr != game_node.attributes_end(); attr++)
 		{
 			string name = attr->name();
-			if		(name == "table_name")			settings.table_name = attr->value(), table_name_set=true;
-			else if (name == "block_size")			settings.block_size = stoi(attr->value());
+			if (name == "block_size")			settings.block_size = stoi(attr->value());
 			else if (name == "map_size")			settings.map_size = stoi(attr->value());
 			else if (name == "fps")					settings.fps = stoi(attr->value());
 			else if (name == "block_max_speed")		settings.block_max_speed = stof(attr->value()), block_max_speed_set = true;
@@ -44,12 +42,8 @@ bool settings_t::load_xml(char * file)
 			else if (name == "port")				settings.port = stoi(attr->value());
 			else
 			{
-				std::cout << "Unresolved atibute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
+				std::cout << "\nUnresolved attribute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
 			}
-		}
-		if (!table_name_set)
-		{
-			//future implementation of dynamic DB table managment
 		}
 		if (!block_max_speed_set)
 			settings.block_max_speed = (float)map_size / 70.f;
