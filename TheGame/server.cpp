@@ -27,7 +27,7 @@ void setup_server(unsigned short port)
 	struct sockaddr_in server_info;
 	server_info.sin_family = AF_INET;
 	server_info.sin_port = htons(port);
-	server_info.sin_addr.s_addr = INADDR_ANY;
+	server_info.sin_addr.s_addr = htonl(INADDR_ANY);
 	
 	tmp_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
