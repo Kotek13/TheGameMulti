@@ -194,8 +194,12 @@ int setup_players()
 
 	std::cout << "Starting reading players" << endl;
 	sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
+	
+	char sql[200];
+	ZeroMemory(sql, sizeof(sql));
+	sprintf(sql, "SELECT * from %s", game->settings.table_name.c_str());
 
-	if (sqlite3_exec(db, "SELECT * from USERS", query_players_cb, NULL, &err_msg) != SQLITE_OK)
+	if (sqlite3_exec(db, sql, query_players_cb, NULL, &err_msg) != SQLITE_OK)
 	{
 		std::cout << "SQL error: " << err_msg << endl;
 		sqlite3_free(err_msg);

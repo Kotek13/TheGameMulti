@@ -8,18 +8,18 @@ bool settings_t::load_xml(char * file)
 
 	if (!result)
 	{
-		std::cout << "\nError occured while parsing \""<< file <<"\"\n";
+		std::cout << "\nError occured while parsing \"" << file << "\"\n";
 		std::cout << "Error description: " << result.description() << "\n";
-		std::cout << "Error offset: " << result.offset << " (error at [..." << (file + result.offset) << "]\n"; 
+		std::cout << "Error offset: " << result.offset << " (error at [..." << (file + result.offset) << "]\n";
 		std::cout << "Using default values instead\n\n";
 		return false;
 	}
 	pugi::xml_node TheGame_node = doc.child("TheGame");
 	for (pugi::xml_node game_node = TheGame_node.first_child(); game_node; game_node = game_node.next_sibling())
 	{
-		bool block_max_speed_set=false,
+		bool block_max_speed_set = false,
 			block_acceleration_set = false,
-			bullet_speed_set=false,
+			bullet_speed_set = false,
 			gun_resolution_set = false;
 		settings_t settings;
 
@@ -40,6 +40,25 @@ bool settings_t::load_xml(char * file)
 			else if (name == "max_ammo")			settings.max_ammo = stoi(attr->value());
 			else if (name == "hp")					settings.hp = stoi(attr->value());
 			else if (name == "port")				settings.port = stoi(attr->value());
+			else if (name == "table_name")
+			{
+				string table_name = attr->value();
+				for (int i = 0; i < table_name.size(); i++)
+				{
+					if (('a' <= table_name[i] && table_name[i] <= 'z') ||
+						('A' <= table_name[i] && table_name[i] <= 'Z') ||
+						('0' <= table_name[i] && table_name[i] <= '9') ||
+						table_name[i] == '_')
+					{
+						settings.table_name = table_name;
+					}
+					else
+					{
+						std::cout <<"\nERROR: \""<< table_name << "\" contains invalid characters, only allowed ASCII letters (a-z, A-Z), digits (0-9) and underscore sign \"_\". Using default USRES table.\n";
+						return false;
+					}
+				}
+			}
 			else
 			{
 				std::cout << "\nUnresolved attribute in node \"" << game_node.name() << "\" attribute: \"" << attr->name() << "\" value: \"" << attr->value() << "\"\n";
