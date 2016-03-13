@@ -209,7 +209,7 @@ int setup_players()
 			std::cout << "Trying to create table: " << game->settings.table_name << std::endl;
 			if (create_table())
 			{
-				std::cout << "Sucessfully created table: " << game->settings.table_name << " with a single player, edit database data and restart server\n";
+				std::cout << "Sucessfully created table: " << game->settings.table_name << " with two players, edit database data and restart server\n";
 			}
 			else
 			{
